@@ -133,6 +133,18 @@ create table if not exists public.reference_images (
   added_by        uuid references auth.users default auth.uid()
 );
 
+-- ---------- Data API grants ----------
+-- Since 2026, new Supabase projects don't expose tables to the API automatically.
+-- These grants say WHICH operations each role may attempt; the RLS policies
+-- below then decide WHICH ROWS. Both are needed.
+grant usage on schema public to anon, authenticated;
+grant select                         on public.species          to anon, authenticated;
+grant insert, update, delete         on public.species          to authenticated;
+grant select                         on public.reviewers        to authenticated;
+grant insert                         on public.submissions      to anon, authenticated;
+grant select, update, delete         on public.submissions      to authenticated;
+grant select, insert, update, delete on public.reference_images to authenticated;
+
 -- ---------- row level security ----------
 alter table public.species          enable row level security;
 alter table public.reviewers        enable row level security;
@@ -150,9 +162,11 @@ create policy "reviewers see reviewers" on public.reviewers for select to authen
 drop policy if exists "anyone can submit"     on public.submissions;
 drop policy if exists "reviewers read all"    on public.submissions;
 drop policy if exists "reviewers update"      on public.submissions;
+drop policy if exists "reviewers delete"      on public.submissions;
 create policy "anyone can submit"  on public.submissions for insert to anon, authenticated with check (true); -- trigger sanitizes
 create policy "reviewers read all" on public.submissions for select to authenticated using (public.is_reviewer());
 create policy "reviewers update"   on public.submissions for update to authenticated using (public.is_reviewer()) with check (public.is_reviewer());
+create policy "reviewers delete"   on public.submissions for delete to authenticated using (public.is_reviewer());
 
 drop policy if exists "reviewers manage references" on public.reference_images;
 create policy "reviewers manage references" on public.reference_images for all to authenticated

@@ -91,12 +91,16 @@ function cardHtml(r) {
         <p class="small">Submitter: <strong>${esc(sub)}</strong></p>
         ${ai.length ? `<ol class="ai-list">${ai.map(a => `<li>${esc(speciesById[a.species_id]?.common_name || a.species_id)} <span class="muted">${Math.round(a.confidence * 100)}% · sim ${a.best_similarity}</span></li>`).join('')}</ol>`
                     : `<p class="small muted">No AI suggestion (${esc(r.ai_suggestions?.status || 'none')}).</p>`}
+        ${r.status === 'pending' ? `
         <label class="field">Confirmed species <select class="sel-species">${speciesOptions(preselect)}</select></label>
         <div class="species-hint small muted"></div>
-        <label class="field">Review notes <input class="review-notes" type="text" maxlength="500" placeholder="Optional; required when rejecting"></label>
+        <label class="field">Review notes <input class="review-notes" type="text" maxlength="500" placeholder="Optional; required when rejecting"></label>` : `
+        <p class="small">Status: <strong>${esc(r.status)}</strong>${r.confirmed_species_id ? ` as <strong>${esc(speciesById[r.confirmed_species_id]?.common_name || r.confirmed_species_id)}</strong>` : ''}${r.reviewed_at ? ` on ${esc(new Date(r.reviewed_at).toLocaleDateString())}` : ''}</p>
+        ${r.review_notes ? `<p class="small muted">Notes: ${esc(r.review_notes)}</p>` : ''}`}
         <div class="btn-row">
-          <button class="btn primary btn-approve">✓ Approve</button>
-          <button class="btn danger btn-reject">✕ Reject</button>
+          ${r.status === 'pending' ? `<button class="btn primary btn-approve">✓ Approve</button>
+          <button class="btn danger btn-reject">✕ Reject</button>` : ''}
+          <button class="btn ghost btn-delete">🗑 Delete</button>
         </div>
       </div>
     </div>
@@ -106,6 +110,21 @@ function cardHtml(r) {
 function wireCard(r) {
   const card = $(`#c-${CSS.escape(r.id)}`);
   showMap($(`#m-${CSS.escape(r.id)}`), [{ lat: r.lat, lon: r.lon, accuracy: r.location_accuracy_m }], { zoom: 14 });
+  const del = $('.btn-delete', card);
+  del.addEventListener('click', async () => {
+    if (!del.dataset.armed) {   // first tap arms, second tap deletes
+      del.dataset.armed = '1';
+      del.textContent = 'Tap again to delete permanently';
+      del.classList.replace('ghost', 'danger');
+      setTimeout(() => { if (del.isConnected && !del.disabled) { delete del.dataset.armed; del.textContent = '🗑 Delete'; del.classList.replace('danger', 'ghost'); } }, 5000);
+      return;
+    }
+    setBusy(card, true);
+    try { await store.deleteSubmission(r); card.remove(); toast('Deleted'); bumpCount(); }
+    catch (e) { toast(e.message, 'err'); setBusy(card, false); }
+  });
+  if (r.status !== 'pending') return;
+
   const sel = $('.sel-species', card);
   const hint = () => {
     const s = speciesById[sel.value];
@@ -141,10 +160,9 @@ function wireCard(r) {
 }
 function setBusy(card, busy) { $$('button', card).forEach(b => (b.disabled = busy)); }
 function bumpCount() {
-  if (currentTab !== 'pending') return;
   const n = $$('#tab-queue .review-card').length;
-  $('#n-pending').textContent = n || '';
-  if (!n) renderQueue('pending');
+  if (currentTab === 'pending') $('#n-pending').textContent = n || '';
+  if (!n) renderQueue(currentTab);
 }
 
 // ---------- reference library ----------

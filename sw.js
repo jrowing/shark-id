@@ -1,5 +1,5 @@
 // Service worker: app works offline at the market; uploads resume when back online.
-const VERSION = 'shark-id-v1';
+const VERSION = 'shark-id-v2';
 const SHELL = [
   './', 'index.html', 'records.html', 'review.html', 'manifest.webmanifest', 'css/app.css', 'icons/icon.svg',
   'js/app.js', 'js/camera.js', 'js/capture.js', 'js/classifier.js', 'js/config.js', 'js/idb.js', 'js/metadata.js',
@@ -32,7 +32,7 @@ self.addEventListener('fetch', e => {
   }
   if (url.origin === self.location.origin) {
     // network first so updates arrive; cache fallback offline
-    e.respondWith(fetch(req).then(res => {
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then(res => {
       if (res.ok) caches.open(VERSION).then(c => c.put(req, res.clone()));
       return res;
     }).catch(() => caches.match(req, { ignoreSearch: true })));

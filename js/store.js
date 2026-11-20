@@ -116,6 +116,19 @@ export async function reviewSubmission(id, patch) {
   check(await client.from('submissions').update(patch).eq('id', id));
 }
 
+// Permanently removes a submission and its photo (reviewers only).
+export async function deleteSubmission(r) {
+  if (isDemo) { await idb.del('demo_submissions', r.id); return; }
+  const client = await sb();
+  const del = await client.from('submissions').delete().eq('id', r.id).select('id');
+  if (del.error) throw del.error;
+  if (!del.data?.length) throw new Error('Not deleted: Supabase is missing the reviewer delete permission. Run supabase/add-delete.sql in the SQL Editor.');
+  if (r.photo_path) {
+    const rm = await client.storage.from(PHOTO_BUCKET).remove([r.photo_path]);
+    if (rm.error) console.warn('Record deleted but photo not removed', rm.error);
+  }
+}
+
 export async function addReference({ species_id, blob, credit, embedding, embedding_model }) {
   const id = crypto.randomUUID();
   if (isDemo) {
