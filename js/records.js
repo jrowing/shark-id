@@ -6,6 +6,7 @@ import * as store from './store.js';
 
 initShell('records');
 
+let all = [];
 const id = new URLSearchParams(location.search).get('id');
 if (id) showDetail(id); else showList();
 
@@ -56,7 +57,6 @@ async function showDetail(recordId) {
   showMap($('#detail-map'), [{ lat: r.lat, lon: r.lon, accuracy: r.location_accuracy_m }]);
 }
 
-let all = [];
 async function showList() {
   $('#list-view').hidden = false;
   try { all = await store.listPublicRecords(); }
