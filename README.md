@@ -8,25 +8,6 @@ A phone web app (PWA) for logging dead sharks at fish markets and roadside stall
 4. **Human review**: every submission waits in a queue until a reviewer approves it (with the confirmed species) or rejects it. Each approved photo is added to the reference library, so suggestions get better over time.
 5. **Records**: approved records show the species (scientific name, family, IUCN status, ID features), when (local time with UTC offset, plus where that came from), where (coordinates, accuracy, site name, map), and length/price/notes. A CSV export is included.
 
-## Try it now (demo mode)
-
-With `SUPABASE_URL` left blank in `js/config.js`, everything is stored in the browser and the review page opens without a login.
-
-```bash
-cd shark-id
-python3 -m http.server 8000
-# open http://localhost:8000 (camera and GPS need localhost or https)
-```
-
-## Go live
-
-1. Create a free project at supabase.com.
-2. **SQL editor** → paste and run `supabase/schema.sql` (existing projects: run `supabase/add-species-2026-11.sql` to add the 10 newer species). This creates the tables, security rules, views, photo bucket and species list.
-3. **Authentication → Users → Add user** (your email and a password), then in the SQL editor:
-   `insert into reviewers (user_id, name) values ('<user uuid>', 'Joe');`
-4. **Project settings → API**: copy the Project URL and the `anon` public key into `js/config.js`.
-5. Deploy the folder to any static https host. On GitHub Pages it can live at e.g. `jrowing.com/shark-id/` (all paths are relative).
-6. **Seed the identifier**: Review → *Reference library* → add 5–10+ confirmed photos per common species. To add many species at once, use **Batch import** and name each file `<species-id>__anything.jpg`. Until then, users see "no suggestion yet" and reviewers do all the identification.
 
 ## How the capture-data rules work
 
