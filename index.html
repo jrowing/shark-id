@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Shark ID — log a shark</title>
+  <meta name="theme-color" content="#0b3d5c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="index.html"><img src="icons/icon.svg" alt=""> Shark ID</a>
+    <nav>
+      <a href="index.html" data-page="log">Log</a>
+      <a href="records.html" data-page="records">Records</a>
+      <a href="review.html" data-page="review">Review</a>
+    </nav>
+    <span id="status" class="status">…</span>
+  </header>
+
+  <main class="wrap">
+    <section id="step-photo" class="card">
+      <h1>Log a shark</h1>
+      <p class="muted">Photograph the whole shark side-on if you can, with the dorsal fins and tail visible. The time and place are taken from the photo automatically, and you can't change them.</p>
+      <div class="btn-row">
+        <button id="btn-camera" class="btn primary big">📷 Take photo</button>
+        <label class="btn big">🖼 Choose an existing photo
+          <input id="file-input" type="file" accept="image/jpeg,image/heic,image/heif,image/png,image/*" hidden>
+        </label>
+      </div>
+      <p class="small muted">Existing photos must be originals from the camera roll. Screenshots and photos forwarded by WhatsApp or Messenger have no capture data and will be refused.</p>
+    </section>
+
+    <div id="camera" class="camera" hidden>
+      <video id="video" playsinline muted></video>
+      <div class="camera-bar">
+        <span id="gps-status" class="gps">Starting…</span>
+        <div class="camera-buttons">
+          <button id="btn-cancel-cam" class="btn ghost">Cancel</button>
+          <button id="btn-shutter" class="shutter" aria-label="Take photo"></button>
+          <span style="width:72px"></span>
+        </div>
+      </div>
+    </div>
+
+    <section id="step-review" class="card" hidden>
+      <div class="grid2">
+        <div>
+          <img id="preview" class="preview" alt="Your photo">
+          <button id="btn-retake" class="btn ghost small-btn">↺ Use a different photo</button>
+        </div>
+        <div>
+          <h2>Capture data</h2>
+          <div id="meta-box"></div>
+          <div id="meta-map" class="map small-map"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="step-id" class="card" hidden>
+      <h2>Species</h2>
+      <div id="ai-box" class="ai-box"></div>
+      <label class="field">Your identification (optional)
+        <select id="species-select"><option value="">Not sure</option></select>
+      </label>
+      <p class="small muted">A reviewer confirms every record before it appears in the database, so it's fine to say "not sure".</p>
+    </section>
+
+    <section id="step-details" class="card" hidden>
+      <h2>Details</h2>
+      <label class="field">Market or place name
+        <input id="site-name" type="text" maxlength="120" placeholder="e.g. Baie Ste Anne market, roadside Grand Anse" autocomplete="off" list="site-list">
+        <datalist id="site-list"></datalist>
+      </label>
+      <div class="grid2 tight">
+        <label class="field">Estimated length (cm)
+          <input id="length" type="number" min="1" max="2000" inputmode="numeric" placeholder="e.g. 120">
+        </label>
+        <label class="field">Price (SCR, if for sale)
+          <input id="price" type="number" min="0" inputmode="decimal" placeholder="e.g. 350">
+        </label>
+      </div>
+      <label class="field">Notes
+        <textarea id="notes" maxlength="2000" rows="3" placeholder="How many were for sale, whole or cut up, fins removed, caught locally?"></textarea>
+      </label>
+      <div id="submit-errors" class="errors" hidden></div>
+      <button id="btn-submit" class="btn primary big wide" disabled>Submit for review</button>
+    </section>
+
+    <section id="done" class="card center" hidden>
+      <h2>Thank you 🦈</h2>
+      <p id="done-text">Your record has been saved and will be checked by a reviewer.</p>
+      <button id="btn-another" class="btn primary">Log another</button>
+    </section>
+  </main>
+
+  <script type="module" src="js/capture.js"></script>
+</body>
+</html>

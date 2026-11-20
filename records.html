@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shark ID — records</title>
+  <meta name="theme-color" content="#0b3d5c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="index.html"><img src="icons/icon.svg" alt=""> Shark ID</a>
+    <nav>
+      <a href="index.html" data-page="log">Log</a>
+      <a href="records.html" data-page="records">Records</a>
+      <a href="review.html" data-page="review">Review</a>
+    </nav>
+    <span id="status" class="status">…</span>
+  </header>
+
+  <main class="wrap wide-wrap">
+    <!-- list view -->
+    <section id="list-view" hidden>
+      <div class="toolbar">
+        <h1>Confirmed records</h1>
+        <div class="btn-row">
+          <select id="filter-species"><option value="">All species</option></select>
+          <button id="btn-csv" class="btn">⬇ CSV</button>
+        </div>
+      </div>
+      <div id="stats" class="stats"></div>
+      <div id="all-map" class="map big-map"></div>
+      <div id="record-grid" class="record-grid"></div>
+    </section>
+
+    <!-- detail view -->
+    <section id="detail-view" hidden>
+      <a href="records.html" class="small">← All records</a>
+      <div id="detail"></div>
+    </section>
+  </main>
+
+  <script type="module" src="js/records.js"></script>
+</body>
+</html>

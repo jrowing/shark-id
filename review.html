@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shark ID — review queue</title>
+  <meta name="theme-color" content="#0b3d5c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="index.html"><img src="icons/icon.svg" alt=""> Shark ID</a>
+    <nav>
+      <a href="index.html" data-page="log">Log</a>
+      <a href="records.html" data-page="records">Records</a>
+      <a href="review.html" data-page="review">Review</a>
+    </nav>
+    <span id="status" class="status">…</span>
+  </header>
+
+  <main class="wrap wide-wrap">
+    <section id="login" class="card narrow" hidden>
+      <h1>Reviewer sign-in</h1>
+      <form id="login-form">
+        <label class="field">Email <input id="email" type="email" required autocomplete="username"></label>
+        <label class="field">Password <input id="password" type="password" required autocomplete="current-password"></label>
+        <button class="btn primary wide">Sign in</button>
+        <p id="login-msg" class="errors" hidden></p>
+      </form>
+    </section>
+
+    <section id="not-reviewer" class="card narrow" hidden>
+      <h1>Not a reviewer</h1>
+      <p>You're signed in, but this account isn't on the reviewer list. An admin can add it in the Supabase SQL editor:</p>
+      <pre id="uid-sql"></pre>
+      <button id="btn-signout-2" class="btn">Sign out</button>
+    </section>
+
+    <section id="panel" hidden>
+      <div class="toolbar">
+        <div class="tabs">
+          <button class="tab active" data-tab="pending">Pending <span id="n-pending" class="count"></span></button>
+          <button class="tab" data-tab="rejected">Rejected</button>
+          <button class="tab" data-tab="library">Reference library</button>
+        </div>
+        <span class="muted small" id="who"></span>
+        <button id="btn-signout" class="btn ghost">Sign out</button>
+      </div>
+
+      <div id="tab-queue"></div>
+
+      <div id="tab-library" hidden>
+        <div class="card">
+          <h2>Add reference photos</h2>
+          <p class="muted small">Seed the identifier with photos whose species you're sure of (your own, or ones you have permission to use). Every record you approve is added to the library automatically too.</p>
+          <div class="grid3">
+            <label class="field">Species <select id="ref-species"></select></label>
+            <label class="field">Credit / source <input id="ref-credit" type="text" placeholder="e.g. J. Rowing, Praslin 2026"></label>
+            <label class="field">Photos <input id="ref-files" type="file" accept="image/*" multiple></label>
+          </div>
+          <button id="btn-add-refs" class="btn primary">Add to library</button>
+          <p id="ref-progress" class="small muted"></p>
+        </div>
+        <div class="card">
+          <h2>Library coverage</h2>
+          <div id="library-table"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/review.js"></script>
+</body>
+</html>
