@@ -97,6 +97,7 @@ function cardHtml(r) {
         <div class="kv"><span>Taken</span><strong>${esc(fmtTaken(r.taken_at, r.local_offset_min))}</strong><em>${esc(LABELS.time_source[r.time_source])} · tz: ${esc(LABELS.tz_source[r.tz_source])}</em></div>
         <div class="kv"><span>Where</span><strong>${esc(fmtCoord(r.lat, r.lon))}${r.location_accuracy_m ? ` ±${Math.round(r.location_accuracy_m)} m` : ''}</strong><em>${esc(LABELS.location_source[r.location_source])}</em></div>
         <div class="kv"><span>Site</span><strong>${esc(r.site_name || '—')}</strong></div>
+        <div class="kv"><span>Sharks in photo</span><strong>${r.shark_count ?? 1}</strong></div>
         <div class="kv"><span>Length / price</span><strong>${r.length_cm ? r.length_cm + ' cm' : '—'} / ${r.price != null ? 'SCR ' + r.price : '—'}</strong></div>
         ${r.notes ? `<div class="kv"><span>Notes</span><strong>${esc(r.notes)}</strong></div>` : ''}
         <div class="kv"><span>Submitted</span><strong>${esc(new Date(r.created_at).toLocaleString())}</strong><em>${esc(LABELS.capture_method[r.capture_method])}</em></div>
@@ -112,6 +113,7 @@ function cardHtml(r) {
         ${r.status === 'pending' ? `
         <label class="field">Confirmed species <select class="sel-species">${speciesOptions(preselect)}</select></label>
         <div class="species-hint small muted"></div>
+        <label class="field">Number of sharks <input class="count-input" type="number" min="1" max="500" value="${r.shark_count ?? 1}"></label>
         <label class="field">Review notes <input class="review-notes" type="text" maxlength="500" placeholder="Optional; required when rejecting"></label>` : `
         <p class="small">Status: <strong>${esc(r.status)}</strong>${r.confirmed_species_id ? ` as <strong>${esc(speciesById[r.confirmed_species_id]?.common_name || r.confirmed_species_id)}</strong>` : ''}${r.reviewed_at ? ` on ${esc(new Date(r.reviewed_at).toLocaleDateString())}` : ''}</p>
         ${r.review_notes ? `<p class="small muted">Notes: ${esc(r.review_notes)}</p>` : ''}`}
@@ -176,6 +178,7 @@ function wireCard(r) {
     try {
       await store.reviewSubmission(r.id, {
         status, confirmed_species_id: sel.value,
+        shark_count: Math.min(500, Math.max(1, parseInt($('.count-input', card).value, 10) || 1)),
         review_notes: $('.review-notes', card).value.trim() || null,
         embedding, embedding_model: embedding ? MODEL_ID : null,
       });

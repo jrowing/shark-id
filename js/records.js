@@ -17,7 +17,7 @@ async function showDetail(recordId) {
   let r;
   try { r = await store.getPublicRecord(recordId); } catch (e) { box.innerHTML = `<p class="errors">${esc(e.message)}</p>`; return; }
   if (!r) { box.innerHTML = '<div class="card">Record not found, or not yet approved.</div>'; return; }
-  document.title = `${r.common_name} · ${fmtTaken(r.taken_at, r.local_offset_min, { withZone: false })} — Shark ID`;
+  document.title = `${r.common_name} · ${fmtTaken(r.taken_at, r.local_offset_min, { withZone: false })} — The Sharkive`;
   const ai = r.ai_suggestions?.results?.[0];
   const names = await store.speciesMap();
   if (ai) ai.species_id = names[ai.species_id]?.common_name || ai.species_id;
@@ -45,6 +45,7 @@ async function showDetail(recordId) {
         </div>
         <div class="card">
           <h2>Details</h2>
+          <div class="kv"><span>Number of sharks</span><strong>${r.shark_count ?? 1}</strong></div>
           <div class="kv"><span>Estimated length</span><strong>${r.length_cm ? r.length_cm + ' cm' : '—'}</strong></div>
           <div class="kv"><span>Price</span><strong>${r.price != null ? 'SCR ' + r.price : '—'}</strong></div>
           ${r.notes ? `<div class="kv"><span>Notes</span><strong>${esc(r.notes)}</strong></div>` : ''}
@@ -78,20 +79,22 @@ function render() {
   for (const r of all) bySpecies[r.species_id] = (bySpecies[r.species_id] || 0) + 1;
   const threatened = all.filter(r => ['CR', 'EN', 'VU'].includes(r.iucn_status)).length;
   const sites = new Set(all.map(r => r.site_name).filter(Boolean)).size;
+  const sharks = all.reduce((s, r) => s + (r.shark_count ?? 1), 0);
   $('#stats').innerHTML = `
+    <div class="stat"><b>${sharks}</b><span>sharks counted</span></div>
     <div class="stat"><b>${all.length}</b><span>confirmed records</span></div>
     <div class="stat"><b>${Object.keys(bySpecies).length}</b><span>species</span></div>
     <div class="stat"><b>${all.length ? Math.round(100 * threatened / all.length) : 0}%</b><span>threatened (CR/EN/VU)</span></div>
     <div class="stat"><b>${sites}</b><span>named sites</span></div>`;
   showMap($('#all-map'), rows.map(r => ({
     lat: r.lat, lon: r.lon,
-    popup: `<a href="records.html?id=${encodeURIComponent(r.id)}"><b>${esc(r.common_name)}</b></a><br>${esc(fmtTaken(r.taken_at, r.local_offset_min, { withZone: false }))}<br>${esc(r.site_name || '')}`,
+    popup: `<a href="records.html?id=${encodeURIComponent(r.id)}"><b>${esc(r.common_name)}${(r.shark_count ?? 1) > 1 ? ` × ${r.shark_count}` : ''}</b></a><br>${esc(fmtTaken(r.taken_at, r.local_offset_min, { withZone: false }))}<br>${esc(r.site_name || '')}`,
   })));
   $('#record-grid').innerHTML = rows.length ? rows.map(r => `
     <a class="record-card" href="records.html?id=${encodeURIComponent(r.id)}">
       <img src="${esc(r.photo_url)}" alt="" loading="lazy">
       <div>
-        <strong>${esc(r.common_name)}</strong>
+        <strong>${esc(r.common_name)}${(r.shark_count ?? 1) > 1 ? ` × ${r.shark_count}` : ''}</strong>
         <span class="small muted">${esc(fmtTaken(r.taken_at, r.local_offset_min, { withZone: false }))}</span>
         <span class="small">${esc(r.site_name || fmtCoord(r.lat, r.lon))}</span>
         ${iucnChip(r.iucn_status)}
@@ -103,7 +106,7 @@ $('#btn-csv').addEventListener('click', () => {
   const rows = filtered();
   if (!rows.length) return toast('Nothing to export', 'warn');
   const cols = ['id', 'taken_at', 'local_offset_min', 'time_source', 'tz_source', 'lat', 'lon', 'location_accuracy_m', 'location_source',
-    'site_name', 'species_id', 'common_name', 'scientific_name', 'family', 'iucn_status', 'length_cm', 'price', 'notes', 'photo_url'];
+    'site_name', 'shark_count', 'species_id', 'common_name', 'scientific_name', 'family', 'iucn_status', 'length_cm', 'price', 'notes', 'photo_url'];
   const q = v => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
   const csv = [cols.join(','), ...rows.map(r => cols.map(c => q(r[c])).join(','))].join('\n');
   const a = document.createElement('a');

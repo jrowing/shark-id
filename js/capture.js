@@ -161,6 +161,7 @@ function reset() {
   for (const id of ['#step-review', '#step-id', '#step-details', '#done']) $(id).hidden = true;
   $('#step-photo').hidden = false;
   for (const id of ['#length', '#price', '#notes']) $(id).value = '';
+  $('#shark-count').value = '1';
   $('#species-select').value = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -182,6 +183,7 @@ $('#btn-submit').addEventListener('click', async () => {
     ai_model: state.ai?.model ?? null,
     ai_suggestions: state.ai ? { status: state.ai.status, results: state.ai.results, library_size: state.ai.library_size ?? 0 } : null,
     submitter_species_id: $('#species-select').value || null,
+    shark_count: Math.min(500, Math.max(1, Math.round(num($('#shark-count').value) || 1))),
     site_name: site || null,
     length_cm: num($('#length').value), price: num($('#price').value),
     notes: $('#notes').value.trim() || null,

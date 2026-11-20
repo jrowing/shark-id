@@ -1,6 +1,6 @@
 {
-  "name": "Shark ID — market shark survey",
-  "short_name": "Shark ID",
+  "name": "The Sharkive — market shark survey",
+  "short_name": "Sharkive",
   "description": "Photograph sharks at fish markets; species are suggested automatically and confirmed by reviewers.",
   "start_url": "index.html",
   "scope": "./",

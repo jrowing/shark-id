@@ -62,6 +62,7 @@ create table if not exists public.submissions (
   length_cm            int check (length_cm between 1 and 2000),
   price                numeric check (price >= 0),
   notes                text check (char_length(notes) <= 2000),
+  shark_count          int not null default 1 check (shark_count between 1 and 500),
 
   -- human review
   status               text not null default 'pending' check (status in ('pending','approved','rejected','reference')),
@@ -179,7 +180,8 @@ create or replace view public.public_records as
          s.site_name, s.length_cm, s.price, s.notes, s.photo_path, s.ai_suggestions, s.ai_model,
          s.reviewed_at,
          sp.id as species_id, sp.common_name, sp.scientific_name, sp.family,
-         sp.iucn_status, sp.max_length_cm, sp.id_features
+         sp.iucn_status, sp.max_length_cm, sp.id_features,
+         s.shark_count
   from public.submissions s
   join public.species sp on sp.id = s.confirmed_species_id
   where s.status = 'approved';

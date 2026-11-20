@@ -110,7 +110,7 @@ nav a.active { background: rgba(255,255,255,.15); color: #fff; }
 .purge-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; background: #fdecea; }
 .table { width: 100%; border-collapse: collapse; font-size: .9rem; } .table td, .table th { text-align: left; padding: .45rem; border-bottom: 1px solid #eef3f5; }
 
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; margin-bottom: 1rem; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .8rem; margin-bottom: 1rem; }
 @media (max-width: 680px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 .stat { background: #fff; border-radius: var(--radius); padding: .8rem 1rem; box-shadow: var(--shadow); }
 .stat b { display: block; font-size: 1.6rem; color: var(--navy); } .stat span { font-size: .8rem; color: var(--muted); }

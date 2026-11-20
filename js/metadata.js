@@ -138,7 +138,7 @@ export async function embedExif(jpegBlob, { takenAt, offsetMin, lat, lon }) {
     const wall = `${local.getUTCFullYear()}:${pad(local.getUTCMonth() + 1)}:${pad(local.getUTCDate())} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}:${pad(local.getUTCSeconds())}`;
     const u = takenAt;
     const exifObj = {
-      '0th': { [piexif.ImageIFD.Software]: 'Shark ID web app', [piexif.ImageIFD.DateTime]: wall },
+      '0th': { [piexif.ImageIFD.Software]: 'The Sharkive web app', [piexif.ImageIFD.DateTime]: wall },
       Exif: { [piexif.ExifIFD.DateTimeOriginal]: wall, [piexif.ExifIFD.DateTimeDigitized]: wall },
       GPS: {
         [piexif.GPSIFD.GPSLatitudeRef]: lat >= 0 ? 'N' : 'S', [piexif.GPSIFD.GPSLatitude]: dms(lat),

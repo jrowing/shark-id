@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Shark ID — configuration
+// The Sharkive — configuration
 // Leave SUPABASE_URL blank to run in DEMO MODE (everything stored in this
 // browser only, review page open without login). Fill both values in to go live.
 // ---------------------------------------------------------------------------
