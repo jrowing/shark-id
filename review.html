@@ -68,6 +68,17 @@
           <p id="ref-progress" class="small muted"></p>
         </div>
         <div class="card">
+          <h2>Batch import</h2>
+          <p class="muted small">Add photos for many species at once. Start each file name with the species ID and two underscores, e.g. <code>tiger__seatizens.jpg</code> or <code>great-hammerhead__2.jpg</code>. Files whose name doesn't match a species are skipped.</p>
+          <div class="grid3">
+            <label class="field">Credit / source <input id="bulk-credit" type="text" placeholder="e.g. Seatizens.sc"></label>
+            <label class="field">Photos <input id="bulk-files" type="file" accept="image/*" multiple></label>
+          </div>
+          <div id="bulk-preview" class="small"></div>
+          <button id="btn-bulk-refs" class="btn primary" disabled>Import</button>
+          <p id="bulk-progress" class="small muted"></p>
+        </div>
+        <div class="card">
           <h2>Library coverage</h2>
           <div id="library-table"></div>
         </div>

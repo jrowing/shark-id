@@ -21,12 +21,12 @@ python3 -m http.server 8000
 ## Go live
 
 1. Create a free project at supabase.com.
-2. **SQL editor** → paste and run `supabase/schema.sql`. This creates the tables, security rules, views, photo bucket and species list.
+2. **SQL editor** → paste and run `supabase/schema.sql` (existing projects: run `supabase/add-species-2026-11.sql` to add the 10 newer species). This creates the tables, security rules, views, photo bucket and species list.
 3. **Authentication → Users → Add user** (your email and a password), then in the SQL editor:
    `insert into reviewers (user_id, name) values ('<user uuid>', 'Joe');`
 4. **Project settings → API**: copy the Project URL and the `anon` public key into `js/config.js`.
 5. Deploy the folder to any static https host. On GitHub Pages it can live at e.g. `jrowing.com/shark-id/` (all paths are relative).
-6. **Seed the identifier**: Review → *Reference library* → add 5–10+ confirmed photos per common species. Until then, users see "no suggestion yet" and reviewers do all the identification.
+6. **Seed the identifier**: Review → *Reference library* → add 5–10+ confirmed photos per common species. To add many species at once, use **Batch import** and name each file `<species-id>__anything.jpg`. Until then, users see "no suggestion yet" and reviewers do all the identification.
 
 ## How the capture-data rules work
 

@@ -239,4 +239,42 @@ $('#btn-add-refs').addEventListener('click', async () => {
   renderLibrary();
 });
 
+
+// ---------- batch import: species ID taken from the file name ----------
+// "<species-id>__anything.jpg" → species-id. Unknown IDs are skipped.
+function bulkPlan() {
+  const ids = new Set(species.map(s => s.id));
+  return [...$('#bulk-files').files].map(f => {
+    const id = f.name.split('__')[0].toLowerCase();
+    return { f, id: ids.has(id) ? id : null };
+  });
+}
+$('#bulk-files').addEventListener('change', () => {
+  const plan = bulkPlan(), ok = plan.filter(p => p.id);
+  const name = id => species.find(s => s.id === id)?.common_name || id;
+  $('#bulk-preview').innerHTML = plan.length ? `<p>${ok.length} of ${plan.length} files matched a species.</p><ul>${
+    plan.map(p => `<li>${esc(p.f.name)} → ${p.id ? esc(name(p.id)) : '<span class="warn-text">no matching species — skipped</span>'}</li>`).join('')}</ul>` : '';
+  $('#btn-bulk-refs').disabled = !ok.length;
+});
+$('#btn-bulk-refs').addEventListener('click', async () => {
+  const plan = bulkPlan().filter(p => p.id);
+  if (!plan.length) return;
+  const prog = $('#bulk-progress'), credit = $('#bulk-credit').value.trim() || null;
+  $('#btn-bulk-refs').disabled = true;
+  let done = 0;
+  for (const [i, { f, id }] of plan.entries()) {
+    prog.textContent = `Processing ${i + 1} of ${plan.length}…`;
+    const url = URL.createObjectURL(f);
+    try {
+      const embedding = await embed(await loadImage(url));
+      await store.addReference({ species_id: id, blob: f, credit, embedding, embedding_model: MODEL_ID });
+      done++;
+    } catch (e) { toast(`${f.name}: ${e.message}`, 'err'); }
+    finally { URL.revokeObjectURL(url); }
+  }
+  prog.textContent = `Imported ${done} of ${plan.length} photo${plan.length === 1 ? '' : 's'}.`;
+  $('#bulk-files').value = ''; $('#bulk-preview').innerHTML = '';
+  renderLibrary();
+});
+
 boot();
