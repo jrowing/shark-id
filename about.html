@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Sharkive — about the project</title>
+  <meta name="description" content="The Sharkive is a citizen-science record of sharks landed and sold at markets in Seychelles, building long-term data to understand shark populations and support conservation.">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-title" content="Sharkive">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="index.html"><img src="icons/icon.svg" alt=""> The Sharkive</a>
+    <nav>
+      <a href="index.html" data-page="log">Log</a>
+      <a href="records.html" data-page="records">Records</a>
+      <a href="about.html" data-page="about">About</a>
+      <a href="review.html" data-page="review">Review</a>
+    </nav>
+    <span id="status" class="status">…</span>
+  </header>
+
+  <main class="wrap about">
+    <section class="card hero">
+      <h1>About The Sharkive</h1>
+      <p class="lead">A shared, photo-based record of the sharks landed and sold at markets and roadside stalls in Seychelles. It's built so that, over time, the data can show which species are being caught, where, and whether that is changing.</p>
+      <a class="btn primary" href="index.html">Log a shark</a>
+      <a class="btn" href="records.html">See the records</a>
+    </section>
+
+    <section class="card">
+      <h2>Why it matters</h2>
+      <p>Sharks grow slowly, mature late and have few young, so their populations recover slowly once they decline. Many of the species found in the western Indian Ocean are listed as threatened on the IUCN Red List.</p>
+      <p>Catches from small-scale and artisanal fishing, the sharks you see on a market table or at the roadside, are often not recorded in any detail. Without that information it's hard to know which species are being caught, how big they are, or whether things are getting better or worse.</p>
+    </section>
+
+    <section class="card">
+      <h2>What we hope the data will do</h2>
+      <p>The aim is to build a long-term record that can, one day, be used to:</p>
+      <ul>
+        <li><strong>Show which species are landed</strong>, including how often threatened species turn up.</li>
+        <li><strong>Track change over time</strong>: in the species mix, in the sizes of sharks landed, and across seasons and years.</li>
+        <li><strong>Map where sharks are landed and sold</strong> around the islands.</li>
+        <li><strong>Support conservation and fisheries management</strong> by sharing the data with researchers, conservation groups and the relevant authorities.</li>
+      </ul>
+      <p>Conclusions about populations need a lot of data collected consistently over a long time. Every record adds to that, and the more people who log what they see, the more useful it becomes.</p>
+    </section>
+
+    <section class="card">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li><strong>Photograph</strong> a shark you see for sale or landed.</li>
+        <li><strong>When and where are recorded automatically</strong> from the photo itself, so every record has a reliable date, time and location. They can't be typed in or changed.</li>
+        <li><strong>A species suggestion</strong> is made on your phone by comparing the photo with photos that have already been confirmed. It is a matching tool, not a generative AI, and it improves as more photos are confirmed.</li>
+        <li><strong>A reviewer checks every record</strong> and confirms the species before it's added to the database.</li>
+        <li><strong>Confirmed records are published</strong> on the <a href="records.html">Records</a> page, with a map and a downloadable data file.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Taking a useful photo</h2>
+      <ul>
+        <li>Show the <strong>whole shark from the side</strong> if you can, with the fins and tail visible. The shape of the head, the dorsal fins and the tail markings are the main clues to the species.</li>
+        <li>Use the <strong>in-app camera</strong>, or an original photo from your camera roll. Photos forwarded through WhatsApp or Messenger lose their time and location and can't be used.</li>
+        <li>Enter the <strong>number of sharks</strong> in the photo. If there are several species, log each one separately.</li>
+        <li>Frame the <strong>shark, not people</strong>. Please avoid including faces.</li>
+        <li><strong>Always ask before photographing</strong> someone's stall or catch.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>This is about sharks, not people</h2>
+      <p>The Sharkive records what is caught. It isn't about who caught or sold it. It doesn't collect the names of fishers or vendors, and it isn't an enforcement tool. Fishers and vendors know more about sharks than almost anyone, and their cooperation is what makes a record like this possible.</p>
+    </section>
+
+    <section class="card">
+      <h2>Your data</h2>
+      <ul>
+        <li>No account is needed to log a shark, and no personal details are collected.</li>
+        <li>Each record stores the photo, when and where it was taken, the place name and details you add, and the type of device used.</li>
+        <li>Published records show the photo, species, date, time and location.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Who runs it</h2>
+      <p>The Sharkive is an independent citizen-science project run from Praslin, Seychelles.</p>
+      <!-- Add a contact email, partner organisations, or how to get involved here. -->
+    </section>
+  </main>
+
+  <script type="module">
+    import { initShell } from './js/app.js';
+    initShell('about');
+  </script>
+</body>
+</html>

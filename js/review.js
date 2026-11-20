@@ -57,10 +57,10 @@ async function renderQueue(status) {
   try { rows = await store.listForReview(status); }
   catch (e) { box.innerHTML = `<p class="errors">${esc(e.message)}</p>`; return; }
   if (status === 'pending') $('#n-pending').textContent = rows.length || '';
-  if (!rows.length) { box.innerHTML = `<div class="card center muted">Nothing ${status === 'pending' ? 'waiting for review' : 'here'}. 🎉</div>`; return; }
+  if (!rows.length) { box.innerHTML = `<div class="card center muted">Nothing ${status === 'pending' ? 'waiting for review' : 'here'}. </div>`; return; }
   box.innerHTML = (status === 'rejected'
       ? `<div class="card purge-bar"><span>${rows.length} rejected record${rows.length === 1 ? '' : 's'}. Purging deletes them and their photos permanently.</span>
-         <button id="btn-purge" class="btn danger">🗑 Purge all rejected</button></div>`
+         <button id="btn-purge" class="btn danger">Purge all rejected</button></div>`
       : '') + rows.map(cardHtml).join('');
   for (const r of rows) wireCard(r);
   const purge = $('#btn-purge');
@@ -68,7 +68,7 @@ async function renderQueue(status) {
     if (!purge.dataset.armed) {   // first tap arms, second tap purges
       purge.dataset.armed = '1';
       purge.textContent = `Tap again to permanently delete ${rows.length}`;
-      setTimeout(() => { if (purge.isConnected && !purge.disabled) { delete purge.dataset.armed; purge.textContent = '🗑 Purge all rejected'; } }, 5000);
+      setTimeout(() => { if (purge.isConnected && !purge.disabled) { delete purge.dataset.armed; purge.textContent = 'Purge all rejected'; } }, 5000);
       return;
     }
     purge.disabled = true; purge.textContent = 'Purging…';
@@ -101,7 +101,7 @@ function cardHtml(r) {
         <div class="kv"><span>Length / price</span><strong>${r.length_cm ? r.length_cm + ' cm' : '—'} / ${r.price != null ? 'SCR ' + r.price : '—'}</strong></div>
         ${r.notes ? `<div class="kv"><span>Notes</span><strong>${esc(r.notes)}</strong></div>` : ''}
         <div class="kv"><span>Submitted</span><strong>${esc(new Date(r.created_at).toLocaleString())}</strong><em>${esc(LABELS.capture_method[r.capture_method])}</em></div>
-        ${flags.length ? `<div class="warnings">${flags.map(f => `<p>⚠️ ${esc(f)}</p>`).join('')}</div>` : ''}
+        ${flags.length ? `<div class="warnings">${flags.map(f => `<p>${esc(f)}</p>`).join('')}</div>` : ''}
         <details class="small"><summary>Raw photo data</summary><pre>${esc(JSON.stringify(r.exif, null, 2))}</pre></details>
       </div>
       <div>
@@ -118,12 +118,12 @@ function cardHtml(r) {
         <p class="small">Status: <strong>${esc(r.status)}</strong>${r.confirmed_species_id ? ` as <strong>${esc(speciesById[r.confirmed_species_id]?.common_name || r.confirmed_species_id)}</strong>` : ''}${r.reviewed_at ? ` on ${esc(new Date(r.reviewed_at).toLocaleDateString())}` : ''}</p>
         ${r.review_notes ? `<p class="small muted">Notes: ${esc(r.review_notes)}</p>` : ''}`}
         <div class="btn-row">
-          ${r.status === 'pending' ? `<button class="btn primary btn-approve">✓ Approve</button>
-          <button class="btn btn-reference" title="Train the identifier with this photo, but don't show it in Records">★ Reference only</button>
-          <button class="btn danger btn-reject">✕ Reject</button>` : ''}
-          ${r.status === 'approved' ? `<button class="btn btn-to-reference" title="Remove from Records, keep for training">★ Make reference only</button>` : ''}
+          ${r.status === 'pending' ? `<button class="btn primary btn-approve">Approve</button>
+          <button class="btn btn-reference" title="Train the identifier with this photo, but don't show it in Records">Reference only</button>
+          <button class="btn danger btn-reject">Reject</button>` : ''}
+          ${r.status === 'approved' ? `<button class="btn btn-to-reference" title="Remove from Records, keep for training">Make reference only</button>` : ''}
           ${r.status === 'reference' ? `<button class="btn btn-to-approved">Publish as record</button>` : ''}
-          <button class="btn ghost btn-delete">🗑 Delete</button>
+          <button class="btn ghost btn-delete">Delete</button>
         </div>
       </div>
     </div>
@@ -139,7 +139,7 @@ function wireCard(r) {
       del.dataset.armed = '1';
       del.textContent = 'Tap again to delete permanently';
       del.classList.replace('ghost', 'danger');
-      setTimeout(() => { if (del.isConnected && !del.disabled) { delete del.dataset.armed; del.textContent = '🗑 Delete'; del.classList.replace('danger', 'ghost'); } }, 5000);
+      setTimeout(() => { if (del.isConnected && !del.disabled) { delete del.dataset.armed; del.textContent = 'Delete'; del.classList.replace('danger', 'ghost'); } }, 5000);
       return;
     }
     setBusy(card, true);

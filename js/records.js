@@ -50,7 +50,7 @@ async function showDetail(recordId) {
           <div class="kv"><span>Price</span><strong>${r.price != null ? 'SCR ' + r.price : '—'}</strong></div>
           ${r.notes ? `<div class="kv"><span>Notes</span><strong>${esc(r.notes)}</strong></div>` : ''}
           <div class="kv"><span>AI suggestion</span><strong>${ai ? `${esc(ai.species_id)} (${Math.round(ai.confidence * 100)}%)` : '—'}</strong></div>
-          <div class="kv"><span>Confirmed by reviewer</span><strong>${r.reviewed_at ? esc(new Date(r.reviewed_at).toLocaleDateString()) : '✓'}</strong></div>
+          <div class="kv"><span>Confirmed by reviewer</span><strong>${r.reviewed_at ? esc(new Date(r.reviewed_at).toLocaleDateString()) : 'Yes'}</strong></div>
           <div class="kv"><span>Record ID</span><strong class="mono small">${esc(r.id)}</strong></div>
         </div>
       </div>

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>The Sharkive — log a shark</title>
-  <meta name="theme-color" content="#0b3d5c">
+  <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-title" content="Sharkive">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -17,6 +17,7 @@
     <nav>
       <a href="index.html" data-page="log">Log</a>
       <a href="records.html" data-page="records">Records</a>
+      <a href="about.html" data-page="about">About</a>
       <a href="review.html" data-page="review">Review</a>
     </nav>
     <span id="status" class="status">…</span>
@@ -27,13 +28,18 @@
       <h1>Log a shark</h1>
       <p class="muted">Photograph the whole shark side-on if you can, with the dorsal fins and tail visible. The time and place are taken from the photo automatically, and you can't change them.</p>
       <div class="btn-row">
-        <button id="btn-camera" class="btn primary big">📷 Take photo</button>
-        <label class="btn big">🖼 Choose an existing photo
+        <button id="btn-camera" class="btn primary big">Take photo</button>
+        <label class="btn big">Choose an existing photo
           <input id="file-input" type="file" accept="image/jpeg,image/heic,image/heif,image/png,image/*" hidden>
         </label>
       </div>
       <p class="small muted">Existing photos must be originals from the camera roll. Screenshots and photos forwarded by WhatsApp or Messenger have no capture data and will be refused.</p>
     </section>
+
+    <a class="card about-link" href="about.html">
+      <strong>About The Sharkive →</strong>
+      <span class="small muted">Why we're recording sharks at markets, and how the data could one day help understand shark populations and support conservation.</span>
+    </a>
 
     <div id="camera" class="camera" hidden>
       <video id="video" playsinline muted></video>
@@ -51,7 +57,7 @@
       <div class="grid2">
         <div>
           <img id="preview" class="preview" alt="Your photo">
-          <button id="btn-retake" class="btn ghost small-btn">↺ Use a different photo</button>
+          <button id="btn-retake" class="btn ghost small-btn">Use a different photo</button>
         </div>
         <div>
           <h2>Capture data</h2>
@@ -96,7 +102,7 @@
     </section>
 
     <section id="done" class="card center" hidden>
-      <h2>Thank you 🦈</h2>
+      <h2>Thank you</h2>
       <p id="done-text">Your record has been saved and will be checked by a reviewer.</p>
       <button id="btn-another" class="btn primary">Log another</button>
     </section>

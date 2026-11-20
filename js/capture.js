@@ -102,8 +102,8 @@ function renderMeta() {
   html += row('Where', m.lat != null ? esc(fmtCoord(m.lat, m.lon)) + (m.location_accuracy_m ? ` <span class="muted">±${m.location_accuracy_m} m</span>` : '') : '<span class="bad">missing</span>',
     m.location_source ? LABELS.location_source[m.location_source] : '');
   html += row('How', LABELS.capture_method[m.capture_method]);
-  if (m.errors.length) html += `<div class="errors">${m.errors.map(e => `<p>⛔ ${esc(e)}</p>`).join('')}</div>`;
-  if (m.warnings.length) html += `<div class="warnings">${m.warnings.map(e => `<p>⚠️ ${esc(e)}</p>`).join('')}</div>`;
+  if (m.errors.length) html += `<div class="errors">${m.errors.map(e => `<p>${esc(e)}</p>`).join('')}</div>`;
+  if (m.warnings.length) html += `<div class="warnings">${m.warnings.map(e => `<p>${esc(e)}</p>`).join('')}</div>`;
   $('#meta-box').innerHTML = html;
 }
 

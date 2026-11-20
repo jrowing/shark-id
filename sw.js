@@ -1,7 +1,7 @@
 // Service worker: app works offline at the market; uploads resume when back online.
-const VERSION = 'shark-id-v2';
+const VERSION = 'shark-id-v4';
 const SHELL = [
-  './', 'index.html', 'records.html', 'review.html', 'manifest.webmanifest', 'css/app.css', 'icons/icon.svg',
+  './', 'index.html', 'records.html', 'review.html', 'about.html', 'manifest.webmanifest', 'css/app.css', 'icons/icon.svg',
   'js/app.js', 'js/camera.js', 'js/capture.js', 'js/classifier.js', 'js/config.js', 'js/idb.js', 'js/metadata.js',
   'js/queue.js', 'js/records.js', 'js/review.js', 'js/species-data.js', 'js/store.js', 'js/util.js',
 ];

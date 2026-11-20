@@ -50,8 +50,8 @@ export async function showMap(el, points, { zoom = 15 } = {}) {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(map);
     const pts = points.filter(p => p.lat != null && p.lon != null);
     for (const p of pts) {
-      const m = L.circleMarker([p.lat, p.lon], { radius: 7, weight: 2, color: '#0b3d5c', fillColor: '#2bb3a3', fillOpacity: 0.9 }).addTo(map);
-      if (p.accuracy) L.circle([p.lat, p.lon], { radius: p.accuracy, weight: 1, color: '#2bb3a3', fillOpacity: 0.08 }).addTo(map);
+      const m = L.circleMarker([p.lat, p.lon], { radius: 7, weight: 2, color: '#ffffff', fillColor: '#0e7c74', fillOpacity: 0.9 }).addTo(map);
+      if (p.accuracy) L.circle([p.lat, p.lon], { radius: p.accuracy, weight: 1, color: '#0e7c74', fillOpacity: 0.06 }).addTo(map);
       if (p.popup) m.bindPopup(p.popup);
     }
     if (pts.length === 1) map.setView([pts[0].lat, pts[0].lon], zoom);
@@ -79,7 +79,7 @@ export function initShell(active) {
     const n = list.length, failed = list.some(i => i.last_error);
     const online = navigator.onLine;
     pill.className = 'status ' + (online ? 'online' : 'offline') + (n ? ' has-queue' : '') + (failed ? ' has-error' : '');
-    pill.textContent = (online ? 'Online' : 'Offline') + (n ? ` · ${n} waiting to upload${failed ? ' ⚠️' : ''}` : '');
+    pill.textContent = (online ? 'Online' : 'Offline') + (n ? ` · ${n} waiting to upload${failed ? ' · failed' : ''}` : '');
     pill.title = n ? 'Tap for details' : '';
     if (!$('#queue-panel')?.hidden) renderQueuePanel();
   }
@@ -98,7 +98,7 @@ export function initShell(active) {
           <div class="small muted">Saved ${esc(new Date(i.queued_at).toLocaleString())} · ${i.attempts || 0} failed attempt${i.attempts === 1 ? '' : 's'} · ${Math.round((i.blob?.size || 0) / 1024)} KB ${esc(i.blob?.type || '')}</div>
           ${uploading === i.id ? '<p class="small"><span class="spinner"></span> Uploading now…</p>' : ''}
           ${i.last_error ? `<div class="errors small">Last error: ${esc(i.last_error)}</div>` : ''}
-          <div class="btn-row"><button class="btn" data-act="retry">↻ Retry now</button><button class="btn ghost" data-act="discard" data-id="${esc(i.id)}">Discard</button></div>
+          <div class="btn-row"><button class="btn" data-act="retry">Retry now</button><button class="btn ghost" data-act="discard" data-id="${esc(i.id)}">Discard</button></div>
         </div>`).join('') : '<p class="muted">Nothing waiting. Everything has uploaded.</p>');
     panel.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', async () => {
       if (b.dataset.act === 'close') { panel.hidden = true; return; }
