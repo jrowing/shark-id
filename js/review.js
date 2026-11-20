@@ -99,7 +99,10 @@ function cardHtml(r) {
         ${r.review_notes ? `<p class="small muted">Notes: ${esc(r.review_notes)}</p>` : ''}`}
         <div class="btn-row">
           ${r.status === 'pending' ? `<button class="btn primary btn-approve">✓ Approve</button>
+          <button class="btn btn-reference" title="Train the identifier with this photo, but don't show it in Records">★ Reference only</button>
           <button class="btn danger btn-reject">✕ Reject</button>` : ''}
+          ${r.status === 'approved' ? `<button class="btn btn-to-reference" title="Remove from Records, keep for training">★ Make reference only</button>` : ''}
+          ${r.status === 'reference' ? `<button class="btn btn-to-approved">Publish as record</button>` : ''}
           <button class="btn ghost btn-delete">🗑 Delete</button>
         </div>
       </div>
@@ -123,6 +126,20 @@ function wireCard(r) {
     try { await store.deleteSubmission(r); card.remove(); toast('Deleted'); bumpCount(); }
     catch (e) { toast(e.message, 'err'); setBusy(card, false); }
   });
+  const move = async (status, msg) => {
+    setBusy(card, true);
+    try {
+      const patch = { status };
+      if (!r.embedding) {
+        try { patch.embedding = await embed(await loadImage(r.photo_url, true)); patch.embedding_model = MODEL_ID; }
+        catch (e) { console.warn('No embedding', e); }
+      }
+      await store.reviewSubmission(r.id, patch);
+      card.remove(); toast(msg); bumpCount();
+    } catch (e) { toast(e.message, 'err'); setBusy(card, false); }
+  };
+  $('.btn-to-reference', card)?.addEventListener('click', () => move('reference', 'Moved to reference only (hidden from Records)'));
+  $('.btn-to-approved', card)?.addEventListener('click', () => move('approved', 'Published to Records'));
   if (r.status !== 'pending') return;
 
   const sel = $('.sel-species', card);
@@ -132,7 +149,7 @@ function wireCard(r) {
   };
   sel.addEventListener('change', hint); hint();
 
-  $('.btn-approve', card).addEventListener('click', async () => {
+  const accept = async (status) => {
     if (!sel.value) return toast('Choose the confirmed species first', 'err');
     setBusy(card, true);
     let embedding = null;
@@ -140,13 +157,15 @@ function wireCard(r) {
     catch (e) { console.warn(e); toast('Approved without adding to the AI library (model or image unavailable)', 'warn'); }
     try {
       await store.reviewSubmission(r.id, {
-        status: 'approved', confirmed_species_id: sel.value,
+        status, confirmed_species_id: sel.value,
         review_notes: $('.review-notes', card).value.trim() || null,
         embedding, embedding_model: embedding ? MODEL_ID : null,
       });
-      card.remove(); toast('Approved'); bumpCount();
+      card.remove(); toast(status === 'approved' ? 'Approved' : 'Added as reference only (hidden from Records)'); bumpCount();
     } catch (e) { toast(e.message, 'err'); setBusy(card, false); }
-  });
+  };
+  $('.btn-approve', card).addEventListener('click', () => accept('approved'));
+  $('.btn-reference', card).addEventListener('click', () => accept('reference'));
 
   $('.btn-reject', card).addEventListener('click', async () => {
     const notes = $('.review-notes', card).value.trim();

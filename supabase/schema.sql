@@ -64,7 +64,7 @@ create table if not exists public.submissions (
   notes                text check (char_length(notes) <= 2000),
 
   -- human review
-  status               text not null default 'pending' check (status in ('pending','approved','rejected')),
+  status               text not null default 'pending' check (status in ('pending','approved','rejected','reference')),
   confirmed_species_id text references public.species(id),
   review_notes         text,
   reviewed_by          uuid references auth.users,
@@ -74,7 +74,7 @@ create table if not exists public.submissions (
   embedding            real[],
   embedding_model      text,
 
-  constraint approved_needs_species check (status <> 'approved' or confirmed_species_id is not null)
+  constraint approved_needs_species check (status not in ('approved','reference') or confirmed_species_id is not null)
 );
 create index if not exists submissions_status_idx  on public.submissions (status, created_at);
 create index if not exists submissions_species_idx on public.submissions (confirmed_species_id, taken_at);
@@ -186,7 +186,7 @@ create or replace view public.public_records as
 
 create or replace view public.reference_library as
   select confirmed_species_id as species_id, embedding, embedding_model
-    from public.submissions where status = 'approved' and embedding is not null
+    from public.submissions where status in ('approved','reference') and embedding is not null
   union all
   select species_id, embedding, embedding_model from public.reference_images;
 

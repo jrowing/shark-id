@@ -144,7 +144,7 @@ export async function addReference({ species_id, blob, credit, embedding, embedd
 // [{ species_id, embedding, embedding_model }] — approved records + reference photos
 export async function getReferenceLibrary() {
   if (isDemo) {
-    const subs = (await idb.all('demo_submissions')).filter(r => r.status === 'approved' && r.embedding)
+    const subs = (await idb.all('demo_submissions')).filter(r => (r.status === 'approved' || r.status === 'reference') && r.embedding)
       .map(r => ({ species_id: r.confirmed_species_id, embedding: r.embedding, embedding_model: r.embedding_model }));
     const refs = (await idb.all('demo_references')).map(r => ({ species_id: r.species_id, embedding: r.embedding, embedding_model: r.embedding_model }));
     return [...subs, ...refs];

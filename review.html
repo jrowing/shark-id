@@ -43,6 +43,7 @@
         <div class="tabs">
           <button class="tab active" data-tab="pending">Pending <span id="n-pending" class="count"></span></button>
           <button class="tab" data-tab="approved">Approved</button>
+          <button class="tab" data-tab="reference">Reference</button>
           <button class="tab" data-tab="rejected">Rejected</button>
           <button class="tab" data-tab="library">Reference library</button>
         </div>
@@ -55,7 +56,7 @@
       <div id="tab-library" hidden>
         <div class="card">
           <h2>Add reference photos</h2>
-          <p class="muted small">Seed the identifier with photos whose species you're sure of (your own, or ones you have permission to use). Every record you approve is added to the library automatically too.</p>
+          <p class="muted small">Seed the identifier with photos whose species you're sure of (your own, or ones you have permission to use). Every record you approve is added to the library automatically too. To train the identifier with a submitted photo <em>without</em> publishing it in Records, use <strong>★ Reference only</strong> in the queue.</p>
           <div class="grid3">
             <label class="field">Species <select id="ref-species"></select></label>
             <label class="field">Credit / source <input id="ref-credit" type="text" placeholder="e.g. J. Rowing, Praslin 2026"></label>
