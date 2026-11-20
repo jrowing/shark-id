@@ -1,6 +1,6 @@
 // Shared page shell: nav, connection/queue status, service worker, formatting, maps.
 import { isDemo } from './store.js';
-import { count as queueCount, flush } from './queue.js';
+import { count as queueCount, flush, items as queueItems, discard as queueDiscard } from './queue.js';
 import { $, esc, loadScript, loadCss } from './util.js';
 
 export const IUCN = {
@@ -72,16 +72,49 @@ export function initShell(active) {
     document.body.prepend(b);
   }
   const pill = $('#status');
+  let uploading = null;
   async function refresh() {
     if (!pill) return;
-    const n = await queueCount().catch(() => 0);
+    const list = await queueItems().catch(() => []);
+    const n = list.length, failed = list.some(i => i.last_error);
     const online = navigator.onLine;
-    pill.className = 'status ' + (online ? 'online' : 'offline');
-    pill.textContent = (online ? 'Online' : 'Offline') + (n ? ` · ${n} waiting to upload` : '');
+    pill.className = 'status ' + (online ? 'online' : 'offline') + (n ? ' has-queue' : '') + (failed ? ' has-error' : '');
+    pill.textContent = (online ? 'Online' : 'Offline') + (n ? ` · ${n} waiting to upload${failed ? ' ⚠️' : ''}` : '');
+    pill.title = n ? 'Tap for details' : '';
+    if (!$('#queue-panel')?.hidden) renderQueuePanel();
   }
+  async function renderQueuePanel() {
+    let panel = $('#queue-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'queue-panel'; panel.className = 'queue-panel'; panel.hidden = true;
+      document.body.appendChild(panel);
+    }
+    const list = await queueItems().catch(() => []);
+    panel.innerHTML = `<div class="queue-head"><strong>Waiting to upload (${list.length})</strong><button class="btn ghost" data-act="close">✕</button></div>` +
+      (list.length ? list.map(i => `
+        <div class="queue-item">
+          <div><strong>${esc(i.record.site_name || 'Unnamed site')}</strong> · <span class="small">photo taken ${esc(fmtTaken(i.record.taken_at, i.record.local_offset_min, { withZone: false }))}</span></div>
+          <div class="small muted">Saved ${esc(new Date(i.queued_at).toLocaleString())} · ${i.attempts || 0} failed attempt${i.attempts === 1 ? '' : 's'} · ${Math.round((i.blob?.size || 0) / 1024)} KB ${esc(i.blob?.type || '')}</div>
+          ${uploading === i.id ? '<p class="small"><span class="spinner"></span> Uploading now…</p>' : ''}
+          ${i.last_error ? `<div class="errors small">Last error: ${esc(i.last_error)}</div>` : ''}
+          <div class="btn-row"><button class="btn" data-act="retry">↻ Retry now</button><button class="btn ghost" data-act="discard" data-id="${esc(i.id)}">Discard</button></div>
+        </div>`).join('') : '<p class="muted">Nothing waiting. Everything has uploaded.</p>');
+    panel.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', async () => {
+      if (b.dataset.act === 'close') { panel.hidden = true; return; }
+      if (b.dataset.act === 'retry') { if (!navigator.onLine) return toast('You are offline', 'warn'); toast('Retrying upload…'); flush(); return; }
+      if (b.dataset.act === 'discard') {
+        if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to discard this record'; b.classList.replace('ghost', 'danger'); return; }
+        await queueDiscard(b.dataset.id); toast('Discarded');
+      }
+    }));
+    return panel;
+  }
+  pill?.addEventListener('click', async () => { const p = await renderQueuePanel(); p.hidden = false; });
   window.addEventListener('online', () => { flush(); refresh(); });
   window.addEventListener('offline', refresh);
-  window.addEventListener('queue-changed', refresh);
+  window.addEventListener('queue-changed', e => { uploading = e.detail?.uploading ?? null; refresh(); });
+  setInterval(() => { if (navigator.onLine) flush(); }, 60000);  // keep retrying in the background
   refresh();
   flush();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

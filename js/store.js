@@ -129,6 +129,24 @@ export async function deleteSubmission(r) {
   }
 }
 
+// Permanently removes ALL rejected submissions and their photos. Returns the number removed.
+export async function purgeRejected() {
+  if (isDemo) {
+    const rows = (await idb.all('demo_submissions')).filter(r => r.status === 'rejected');
+    for (const r of rows) await idb.del('demo_submissions', r.id);
+    return rows.length;
+  }
+  const client = await sb();
+  const del = await client.from('submissions').delete().eq('status', 'rejected').select('id, photo_path');
+  if (del.error) throw del.error;
+  const paths = del.data.map(r => r.photo_path).filter(Boolean);
+  for (let i = 0; i < paths.length; i += 100) {
+    const rm = await client.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + 100));
+    if (rm.error) console.warn('Some photos not removed', rm.error);
+  }
+  return del.data.length;
+}
+
 export async function addReference({ species_id, blob, credit, embedding, embedding_model }) {
   const id = crypto.randomUUID();
   if (isDemo) {

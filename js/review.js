@@ -58,8 +58,26 @@ async function renderQueue(status) {
   catch (e) { box.innerHTML = `<p class="errors">${esc(e.message)}</p>`; return; }
   if (status === 'pending') $('#n-pending').textContent = rows.length || '';
   if (!rows.length) { box.innerHTML = `<div class="card center muted">Nothing ${status === 'pending' ? 'waiting for review' : 'here'}. 🎉</div>`; return; }
-  box.innerHTML = rows.map(cardHtml).join('');
+  box.innerHTML = (status === 'rejected'
+      ? `<div class="card purge-bar"><span>${rows.length} rejected record${rows.length === 1 ? '' : 's'}. Purging deletes them and their photos permanently.</span>
+         <button id="btn-purge" class="btn danger">🗑 Purge all rejected</button></div>`
+      : '') + rows.map(cardHtml).join('');
   for (const r of rows) wireCard(r);
+  const purge = $('#btn-purge');
+  purge?.addEventListener('click', async () => {
+    if (!purge.dataset.armed) {   // first tap arms, second tap purges
+      purge.dataset.armed = '1';
+      purge.textContent = `Tap again to permanently delete ${rows.length}`;
+      setTimeout(() => { if (purge.isConnected && !purge.disabled) { delete purge.dataset.armed; purge.textContent = '🗑 Purge all rejected'; } }, 5000);
+      return;
+    }
+    purge.disabled = true; purge.textContent = 'Purging…';
+    try {
+      const n = await store.purgeRejected();
+      toast(n ? `Purged ${n} rejected record${n === 1 ? '' : 's'}` : 'Nothing purged: check the delete permission (supabase/add-delete.sql)', n ? 'ok' : 'err');
+    } catch (e) { toast(e.message, 'err'); }
+    renderQueue('rejected');
+  });
 }
 
 function cardHtml(r) {
