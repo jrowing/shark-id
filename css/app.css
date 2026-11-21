@@ -32,7 +32,8 @@ pre { background: var(--soft); padding: .75rem; border-radius: var(--radius-sm);
   background: rgba(255,255,255,.88); backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px);
   border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: .5rem; color: var(--ink); text-decoration: none; font-weight: 650; letter-spacing: -0.02em; }
-.brand img { width: 22px; height: 22px; border-radius: 6px; }
+.brand .brand-logo { height: 24px; width: auto; display: block; }
+.brand .brand-icon { display: none; width: 30px; height: 30px; border-radius: 7px; }
 nav { display: flex; gap: 1.25rem; margin-left: auto; }
 nav a { color: var(--muted); text-decoration: none; font-size: .9rem; padding: .2rem 0; border-bottom: 1.5px solid transparent; }
 nav a:hover { color: var(--ink); }
@@ -45,12 +46,11 @@ nav a.active { color: var(--ink); border-bottom-color: var(--ink); }
 .status.has-error::before { background: var(--danger); }
 @media (max-width: 600px) {
   .top { gap: .6rem; padding-left: .9rem; padding-right: .9rem; }
-  .brand { font-size: .95rem; }
+  .brand .brand-logo { display: none; } .brand .brand-icon { display: block; }
   nav { gap: .85rem; overflow-x: auto; scrollbar-width: none; }
   nav a { font-size: .85rem; white-space: nowrap; }
   .status { display: none; } .status.has-queue { display: inline-flex; }
 }
-@media (max-width: 380px) { .brand span, .brand { font-size: 0; gap: 0; } }
 
 /* ---------- layout ---------- */
 .wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; } .wide-wrap { max-width: 1160px; }
