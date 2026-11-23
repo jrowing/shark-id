@@ -5,7 +5,13 @@
 // ---------------------------------------------------------------------------
 export const SUPABASE_URL = 'https://necwzuqhwmmupuxlywar.supabase.co';        // e.g. 'https://abcd1234.supabase.co'
 export const SUPABASE_ANON_KEY = 'sb_publishable_2i5IcVe-OUUsFIGS1z1Hng_A8-D4dms';   // the public "anon" key (safe to publish)
-export const PHOTO_BUCKET = 'shark-photos';
+export const PHOTO_BUCKET = 'shark-photos';     // public: approved records only
+export const PENDING_BUCKET = 'shark-pending';  // private: everything not yet approved
+
+// Cloudflare Turnstile site key (public). Contributors pass a one-off "are you a
+// person" check before their phone's first upload. Leave blank to skip the check
+// (only if Bot Protection is also off in Supabase → Authentication → Attack Protection).
+export const TURNSTILE_SITE_KEY = '';
 
 // Rules for the capture data. Submissions that break a rule are blocked.
 export const RULES = {

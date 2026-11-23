@@ -11,6 +11,9 @@ export const MODEL_ID = 'mobilenet_v2_1.0_flipavg_v1';
 const TFJS = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
 const MOBILENET = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js';
 
+// TensorFlow.js on its own (the explicit-image check needs it, not MobileNet).
+export function loadTf() { return loadScript(TFJS); }
+
 let modelPromise;
 export function loadModel() {
   return (modelPromise ??= (async () => {
@@ -41,12 +44,10 @@ export async function embed(img) {
 
 const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; };
 
-// Returns { status, results:[{species_id, confidence, best_similarity, votes}], library_size }
-export function rank(queryEmbedding, library, k = AI.k) {
-  const refs = library.filter(r => r.embedding_model === MODEL_ID && r.embedding?.length === queryEmbedding.length);
-  if (!refs.length) return { status: 'no_library', results: [], library_size: 0 };
-  const nn = refs.map(r => ({ species_id: r.species_id, sim: dot(queryEmbedding, r.embedding) }))
-    .sort((a, b) => b.sim - a.sim).slice(0, k);
+// Turn nearest neighbours [{species_id, sim}] into up to 3 species suggestions.
+export function aggregate(neighbours, { library_size = 0, species_in_library = 0, source = 'server' } = {}) {
+  if (!neighbours?.length) return { status: 'no_library', results: [], library_size: 0 };
+  const nn = [...neighbours].sort((a, b) => b.sim - a.sim);
   const top = nn[0].sim;
   const agg = {};
   for (const n of nn) {
@@ -58,5 +59,15 @@ export function rank(queryEmbedding, library, k = AI.k) {
   const results = Object.values(agg)
     .map(a => ({ species_id: a.species_id, confidence: +(a.weight / total).toFixed(3), best_similarity: +a.best_similarity.toFixed(3), votes: a.votes }))
     .sort((a, b) => b.confidence - a.confidence).slice(0, 3);
-  return { status: 'ok', results, library_size: refs.length, species_in_library: new Set(refs.map(r => r.species_id)).size };
+  return { status: 'ok', source, results, library_size, species_in_library };
+}
+
+// Offline fallback: compare with one average fingerprint per species.
+export function rankCentroids(queryEmbedding, centroids) {
+  const refs = (centroids || []).filter(c => c.embedding?.length === queryEmbedding.length);
+  const nn = refs.map(c => {
+    const norm = Math.sqrt(dot(c.embedding, c.embedding)) || 1;
+    return { species_id: c.species_id, sim: dot(queryEmbedding, c.embedding) / norm };
+  });
+  return aggregate(nn, { library_size: refs.reduce((s, c) => s + c.n, 0), species_in_library: refs.length, source: 'offline' });
 }

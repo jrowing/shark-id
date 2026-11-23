@@ -4,10 +4,12 @@ A phone web app (PWA) for logging dead sharks at fish markets and roadside stall
 
 1. **Photo**: taken with the in-app camera, or an original photo from the camera roll.
 2. **When and where come from the photo, never from the user.** Capture time comes from the shutter press or from the photo's EXIF data. Location comes from GPS at the shutter or from the photo's EXIF GPS. Photos without a trustworthy capture time are **refused**. Once saved, time and location can't be edited, even by reviewers (a database trigger enforces this).
-3. **Species suggestion (non-generative)**: MobileNet V2 turns the photo into an image fingerprint (embedding), which is compared by k-nearest-neighbours with reviewer-confirmed photos. This runs on the phone and works offline once the model has been cached.
+3. **Species suggestion (non-generative)**: MobileNet V2 turns the photo into an image fingerprint (embedding) on the phone. The server finds the nearest reviewer-confirmed photos (pgvector). Offline, the phone compares the fingerprint with a cached average for each species.
 4. **Human review**: every submission waits in a queue until a reviewer approves it (with the confirmed species) or rejects it. Each approved photo is added to the reference library, so suggestions get better over time.
-5. **Records**: approved records show the species (scientific name, family, IUCN status, ID features), when (local time with UTC offset, plus where that came from), where (coordinates, accuracy, site name, map), and length/price/notes. A CSV export is included.
+5. **Records**: approved records (paged, 48 at a time) show the species (scientific name, family, IUCN status, ID features), when (local time with UTC offset, plus where that came from), where (coordinates, accuracy, site name, map), and length/price/notes. A CSV export is included.
 
+
+**Setting up or upgrading a live project:** run `supabase/schema.sql`, then follow [SCALING.md](SCALING.md) (anonymous sign-ins, Turnstile, `supabase/scale-2026-11.sql`).
 
 ## How the capture-data rules work
 
@@ -32,21 +34,26 @@ index.html  records.html  review.html   pages
 js/capture.js     log flow (camera / file → metadata → AI → submit)
 js/metadata.js    EXIF reading, time-zone resolution, validation rules, EXIF writing
 js/camera.js      in-app camera + GPS watch
-js/classifier.js  MobileNet embeddings + kNN ranking
+js/classifier.js  MobileNet embeddings + ranking of nearest neighbours
+js/image.js       resize to 1600 px + 400 px thumbnail, re-stamp EXIF
+js/captcha.js     Cloudflare Turnstile check before a phone's first upload
+js/screen.js      on-phone screening: explicit-image check (models/nsfw) + "is it a fish?" check
 js/store.js       data layer (Supabase or IndexedDB demo)
 js/queue.js       offline upload queue
-js/review.js      reviewer queue + reference library
+js/review.js      claimed review batches, expert queue, history, people, reference library
 js/records.js     public records, detail page, CSV
 sw.js             offline caching
-supabase/schema.sql
+supabase/schema.sql          base schema
+supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles (run after schema.sql)
 ```
 
 ## Security model
 
-- The public (`anon` key) can **insert** submissions and upload photos to `submissions/`, but can't read pending records or set review fields. The trigger forces `status = 'pending'` and clears review and embedding fields.
-- The public can read only `public_records` (approved rows, without device info or raw EXIF) and `reference_library` (embeddings only).
-- Only users listed in `reviewers` can read the queue, approve or reject, and manage reference photos.
-- The photo bucket is public-read with random UUID file names. If pending photos need to stay private, switch to a private bucket with signed URLs.
+- Contributors sign in anonymously (after a Turnstile check) the first time they upload. They can **insert** submissions and upload JPEGs (3 MB at most) only to `submissions/<their id>/`, within per-phone rate limits (`settings` table). They can't read pending records or set review fields. The trigger forces `status = 'pending'` and clears the review and embedding fields.
+- The public can read only `public_records` (approved rows, without device info or raw EXIF), plus the `records_summary`, `record_points`, `match_species` and `species_centroids` functions. Raw fingerprints aren't readable.
+- Only active users in `reviewers` can read the queue. A reviewer claims records before deciding them, and someone else's claim blocks a decision for 15 minutes. Expert-only species and escalated records need the `expert` or `admin` role. Every decision is logged in `review_events`.
+- Photos are uploaded to the private `shark-pending` bucket. Reviewers see them through one-hour signed links, and a photo moves to the public `shark-photos` bucket only when its record is approved (the database refuses an approval whose photo isn't public, and vice versa).
+- Before upload, the phone screens each photo (`js/screen.js`): clearly explicit photos are refused, and borderline or "not a shark" photos are flagged and blurred for reviewers. Admins can block a phone, which stops its uploads and deletes its unapproved records.
 - Photos at markets often show vendors' faces. Consider a note on the log page asking users to frame just the shark, and blur faces before any public display.
 
 ## Next steps

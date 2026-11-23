@@ -246,3 +246,7 @@ on conflict (id) do update set
 -- ---------- make yourself a reviewer ----------
 -- 1. Authentication → Users → "Add user" (email + password)
 -- 2. insert into public.reviewers (user_id, name) values ('<that user''s uuid>', 'Joe');
+
+-- ---------- then ----------
+-- Run supabase/scale-2026-11.sql next (contributor sign-in, rate limits,
+-- server-side matching, reviewer roles). See SCALING.md.

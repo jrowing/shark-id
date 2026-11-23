@@ -45,13 +45,13 @@ export async function showMap(el, points, { zoom = 15 } = {}) {
   try {
     const L = await loadLeaflet();
     if (el._map) el._map.remove();
-    const map = L.map(el, { scrollWheelZoom: false });
+    const map = L.map(el, { scrollWheelZoom: false, preferCanvas: points.length > 100 });
     el._map = map;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(map);
     const pts = points.filter(p => p.lat != null && p.lon != null);
     for (const p of pts) {
       const m = L.circleMarker([p.lat, p.lon], { radius: 7, weight: 2, color: '#ffffff', fillColor: '#0e7c74', fillOpacity: 0.9 }).addTo(map);
-      if (p.accuracy) L.circle([p.lat, p.lon], { radius: p.accuracy, weight: 1, color: '#0e7c74', fillOpacity: 0.06 }).addTo(map);
+      if (p.accuracy && pts.length <= 100) L.circle([p.lat, p.lon], { radius: p.accuracy, weight: 1, color: '#0e7c74', fillOpacity: 0.06 }).addTo(map);
       if (p.popup) m.bindPopup(p.popup);
     }
     if (pts.length === 1) map.setView([pts[0].lat, pts[0].lon], zoom);

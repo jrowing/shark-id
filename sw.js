@@ -1,8 +1,8 @@
 // Service worker: app works offline at the market; uploads resume when back online.
-const VERSION = 'shark-id-v8';
+const VERSION = 'shark-id-v10';
 const SHELL = [
-  './', 'index.html', 'records.html', 'review.html', 'about.html', 'manifest.webmanifest', 'css/app.css?v=3', 'icons/sharkive-wordmark.png?v=2', 'icons/icon-192.png', 'icons/favicon-a-64.png?v=1', 'icons/favicon-a-dark-64.png?v=1',
-  'js/app.js', 'js/camera.js', 'js/capture.js', 'js/classifier.js', 'js/config.js', 'js/idb.js', 'js/metadata.js',
+  './', 'index.html', 'records.html', 'review.html', 'about.html', 'manifest.webmanifest', 'css/app.css?v=5', 'icons/sharkive-wordmark.png?v=2', 'icons/icon-192.png', 'icons/favicon-a-64.png?v=1', 'icons/favicon-a-dark-64.png?v=1',
+  'js/app.js', 'js/camera.js', 'js/capture.js', 'js/captcha.js', 'js/image.js', 'js/screen.js', 'js/classifier.js', 'js/config.js', 'js/idb.js', 'js/metadata.js',
   'js/queue.js', 'js/records.js', 'js/review.js', 'js/species-data.js', 'js/store.js', 'js/util.js',
 ];
 // Libraries and model weights: cache on first use, then serve from cache.

@@ -7,8 +7,8 @@ import { submit } from './store.js';
 const ATTEMPT_TIMEOUT_MS = 120000;
 let flushing = null;
 
-export async function enqueue(record, blob) {
-  await idb.put('queue', { id: record.id, record, blob, queued_at: Date.now(), attempts: 0, last_error: null });
+export async function enqueue(record, blob, thumb) {
+  await idb.put('queue', { id: record.id, record, blob, thumb, queued_at: Date.now(), attempts: 0, last_error: null });
   flush();
 }
 
@@ -45,10 +45,12 @@ export function flush() {
     for (const item of await items()) {
       window.dispatchEvent(new CustomEvent('queue-changed', { detail: { uploading: item.id } }));
       try {
-        await withTimeout(submit(item.record, item.blob), ATTEMPT_TIMEOUT_MS);
+        await withTimeout(submit(item.record, item.blob, item.thumb), ATTEMPT_TIMEOUT_MS);
         await idb.del('queue', item.id);
       } catch (e) {
         console.warn('Upload failed, will retry later', e);
+        // Rate-limited or blocked: stop for this round instead of hammering the server.
+        if (e?.code === 'P0429' || e?.code === 'P0423') { await idb.put('queue', { ...item, attempts: (item.attempts || 0) + 1, last_error: describe(e), last_attempt: Date.now() }); break; }
         await idb.put('queue', { ...item, attempts: (item.attempts || 0) + 1, last_error: describe(e), last_attempt: Date.now() });
       }
       window.dispatchEvent(new CustomEvent('queue-changed'));

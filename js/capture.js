@@ -3,11 +3,15 @@ import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.j
 import { $, esc, loadImage } from './util.js';
 import { Camera } from './camera.js';
 import { readFileMetadata, currentPosition, checkTime, LABELS } from './metadata.js';
-import { embed, rank, MODEL_ID } from './classifier.js';
-import { listSpecies, getReferenceLibrary, isDemo } from './store.js';
+import { embed, aggregate, rankCentroids, MODEL_ID } from './classifier.js';
+import { AI } from './config.js';
+import { listSpecies, matchSpecies, speciesCentroids, isDemo } from './store.js';
+import { prepareUpload } from './image.js';
+import { screenPhoto, NOT_SCREENED } from './screen.js';
 import { enqueue } from './queue.js';
 
 initShell('log');
+const submitLabel = $('#btn-submit').textContent;
 
 let species = [];
 let speciesById = {};
@@ -87,9 +91,10 @@ async function startReview(blob, meta) {
   $('#preview').src = state.url;
   renderMeta();
   updateSubmit();
+  state.aiPromise = runAI();
+  state.screenPromise = runScreening(state);
   if (meta.lat != null) showMap($('#meta-map'), [{ lat: meta.lat, lon: meta.lon, accuracy: meta.location_accuracy_m }]);
   else $('#meta-map').innerHTML = '';
-  runAI();
   $('#step-review').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -113,15 +118,26 @@ async function runAI() {
   const mine = state;
   try {
     const img = await loadImage(mine.url);
-    const [vec, library] = await Promise.all([embed(img), getReferenceLibrary()]);
+    const vec = await embed(img);
     if (mine !== state) return;
-    const r = rank(vec, library);
+    let r;
+    try {
+      if (!navigator.onLine) throw new Error('offline');
+      const m = await matchSpecies(vec, MODEL_ID, AI.k);
+      r = aggregate(m.neighbours, m);
+      speciesCentroids(MODEL_ID).catch(() => {});   // keep the offline fallback fresh
+    } catch (e) {
+      r = rankCentroids(vec, await speciesCentroids(MODEL_ID, { maxAgeMs: Infinity }));
+    }
+    if (mine !== state) return;
     state.ai = { model: MODEL_ID, ...r };
     if (r.status === 'no_library') {
       box.innerHTML = '<p class="muted">The reference library is still empty, so there\'s no automatic suggestion yet. A reviewer will identify this shark, and each confirmed photo teaches the app.</p>';
       return;
     }
-    box.innerHTML = `<p class="small muted">Suggestions from ${r.library_size} confirmed photos of ${r.species_in_library} species. Tap one to use it.</p>` +
+    box.innerHTML = `<p class="small muted">${r.source === 'offline'
+        ? `Offline: rough suggestions from saved averages of ${r.species_in_library} species.`
+        : `Suggestions from ${r.library_size} confirmed photos of ${r.species_in_library} species.`} Tap one to use it.</p>` +
       r.results.map(x => {
         const s = speciesById[x.species_id] || { common_name: x.species_id, scientific_name: '' };
         const pct = Math.round(x.confidence * 100);
@@ -145,13 +161,42 @@ async function runAI() {
   }
 }
 
+// Explicit-image and "is it a shark?" checks, on the phone, before upload.
+async function runScreening(mine) {
+  let result;
+  try {
+    const img = await loadImage(mine.url);
+    await mine.aiPromise?.catch(() => {});
+    result = await screenPhoto(img, { bestSimilarity: mine.ai?.results?.[0]?.best_similarity ?? null });
+  } catch (e) {
+    console.warn('Screening failed', e);
+    result = NOT_SCREENED;
+  }
+  if (mine !== state) return result;
+  state.screen = result;
+  const box = $('#screen-box');
+  if (result.block) {
+    box.hidden = false; box.className = 'errors';
+    box.innerHTML = '<p><strong>This photo can\'t be uploaded.</strong> It looks like it may be explicit. If it\'s a photo of a shark, please take another one.</p>';
+  } else if (result.flags.includes('not_shark')) {
+    box.hidden = false; box.className = 'warnings';
+    box.innerHTML = '<p><strong>This doesn\'t look like a shark or a fish.</strong> If it is one, you can still send it and a reviewer will check it.</p>';
+  } else { box.hidden = true; box.innerHTML = ''; }
+  updateSubmit();
+  return result;
+}
+
 function updateSubmit() {
   const errs = state?.meta.errors || [];
-  $('#btn-submit').disabled = !state || errs.length > 0 || !state.meta.taken_at || state.meta.lat == null;
+  const blocked = !!state?.screen?.block;
+  $('#btn-submit').disabled = !state || blocked || errs.length > 0 || !state.meta.taken_at || state.meta.lat == null;
+  delete $('#btn-submit').dataset.armed;
   const box = $('#submit-errors');
   box.hidden = !errs.length;
   box.innerHTML = errs.length ? '<p>This photo can\'t be submitted because its capture time or location is missing or invalid (see above).</p>' : '';
 }
+
+const withTimeout = (p, ms, fallback) => Promise.race([p, new Promise(res => setTimeout(() => res(fallback), ms))]);
 
 $('#btn-retake').addEventListener('click', reset);
 $('#btn-another').addEventListener('click', reset);
@@ -163,11 +208,27 @@ function reset() {
   for (const id of ['#length', '#price', '#notes']) $(id).value = '';
   $('#shark-count').value = '1';
   $('#species-select').value = '';
+  $('#screen-box').hidden = true;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 $('#btn-submit').addEventListener('click', async () => {
   if (!state) return;
+  const btn = $('#btn-submit');
+  if (!btn.dataset.armed) {
+    btn.disabled = true; btn.textContent = 'Checking photo…';
+    const screen = await withTimeout(state.screenPromise, 20000, NOT_SCREENED);
+    btn.textContent = submitLabel;
+    if (!state) return;
+    state.screen = screen;
+    updateSubmit();
+    if (screen.block) return;
+    if (screen.flags.includes('not_shark')) {   // ask once: first tap warns, second tap sends
+      btn.dataset.armed = '1'; btn.textContent = 'It is a shark: send anyway';
+      $('#screen-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+  }
   const m = state.meta;
   checkTime({ ...m, errors: m.errors, warnings: [] }); // re-check right before submitting
   if (m.errors.length || !m.taken_at || m.lat == null) { renderMeta(); updateSubmit(); return; }
@@ -187,14 +248,17 @@ $('#btn-submit').addEventListener('click', async () => {
     site_name: site || null,
     length_cm: num($('#length').value), price: num($('#price').value),
     notes: $('#notes').value.trim() || null,
+    screening: (({ block, ...rest }) => rest)(state.screen || NOT_SCREENED),
   };
   if (site) {
     const sites = [site, ...JSON.parse(localStorage.getItem('sharkid_sites') || '[]').filter(s => s !== site)].slice(0, 20);
     localStorage.setItem('sharkid_sites', JSON.stringify(sites));
   }
   $('#btn-submit').disabled = true;
+  $('#btn-submit').textContent = 'Saving…';
   try {
-    await enqueue(record, state.blob);
+    const { full, thumb } = await prepareUpload(record, state.blob);
+    await enqueue(record, full, thumb);
     for (const id of ['#step-review', '#step-id', '#step-details']) $(id).hidden = true;
     $('#done').hidden = false;
     $('#done-text').textContent = navigator.onLine || isDemo
@@ -204,5 +268,7 @@ $('#btn-submit').addEventListener('click', async () => {
   } catch (e) {
     toast('Could not save: ' + e.message, 'err');
     $('#btn-submit').disabled = false;
+  } finally {
+    $('#btn-submit').textContent = submitLabel;
   }
 });

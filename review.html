@@ -10,7 +10,7 @@
   <link rel="icon" href="icons/favicon-a-64.png?v=1" type="image/png">
   <link rel="icon" href="icons/favicon-a-dark-64.png?v=1" type="image/png" media="(prefers-color-scheme: dark)">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/app.css?v=3">
+  <link rel="stylesheet" href="css/app.css?v=5">
 </head>
 <body>
   <header class="top">
@@ -33,12 +33,29 @@
         <button class="btn primary wide">Sign in</button>
         <p id="login-msg" class="errors" hidden></p>
       </form>
+      <details class="small signup">
+        <summary>New reviewer? Create an account</summary>
+        <form id="signup-form">
+          <p class="muted">Create an account, then ask for reviewer access. An admin approves each reviewer.</p>
+          <label class="field">Email <input id="su-email" type="email" required autocomplete="username"></label>
+          <label class="field">Password <input id="su-password" type="password" required minlength="8" autocomplete="new-password"></label>
+          <button class="btn wide">Create account</button>
+          <p id="signup-msg" class="small" hidden></p>
+        </form>
+      </details>
     </section>
 
     <section id="not-reviewer" class="card narrow" hidden>
-      <h1>Not a reviewer</h1>
-      <p>You're signed in, but this account isn't on the reviewer list. An admin can add it in the Supabase SQL editor:</p>
-      <pre id="uid-sql"></pre>
+      <h1>Reviewer access</h1>
+      <div id="request-form-box">
+        <p>You're signed in as <strong class="me-email"></strong>, but this account isn't a reviewer yet. Ask for access and an admin will review your request.</p>
+        <form id="request-form">
+          <label class="field">Your name <input id="rq-name" type="text" required maxlength="80"></label>
+          <label class="field">Experience with shark ID (optional) <input id="rq-note" type="text" maxlength="500" placeholder="e.g. dive guide, marine biology student"></label>
+          <button class="btn primary wide">Request access</button>
+        </form>
+      </div>
+      <p id="request-waiting" hidden>Your request is waiting for an admin to approve it. Check back later.</p>
       <button id="btn-signout-2" class="btn">Sign out</button>
     </section>
 
@@ -46,16 +63,31 @@
       <div class="toolbar">
         <div class="tabs">
           <button class="tab active" data-tab="pending">Pending <span id="n-pending" class="count"></span></button>
+          <button class="tab" data-tab="expert" hidden>Needs expert <span id="n-expert" class="count"></span></button>
           <button class="tab" data-tab="approved">Approved</button>
           <button class="tab" data-tab="reference">Reference</button>
           <button class="tab" data-tab="rejected">Rejected</button>
           <button class="tab" data-tab="library">Reference library</button>
+          <button class="tab" data-tab="people" hidden>People</button>
         </div>
         <span class="muted small" id="who"></span>
         <button id="btn-signout" class="btn ghost">Sign out</button>
       </div>
 
       <div id="tab-queue"></div>
+
+      <div id="tab-people" hidden>
+        <div class="card">
+          <h2>Reviewers</h2>
+          <p class="muted small"><strong>Reviewer</strong>: approves most species. <strong>Expert</strong>: also approves expert-only species (critically endangered and provisional IDs) and works the "Needs expert" queue. <strong>Admin</strong>: everything, plus this page.</p>
+          <div id="people-table"></div>
+        </div>
+        <div class="card">
+          <h2>Blocked phones</h2>
+          <p class="muted small">Blocked phones can't upload. Block one from any record it sent (<strong>Block this phone</strong>). That also deletes everything it sent that wasn't approved.</p>
+          <div id="blocked-table"></div>
+        </div>
+      </div>
 
       <div id="tab-library" hidden>
         <div class="card">

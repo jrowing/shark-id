@@ -188,3 +188,21 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 .about .hero h1 { font-size: 2.1rem; }
 .about .lead { font-size: 1.15rem; color: var(--ink-2); max-width: 36rem; }
 .about .hero .btn { margin: .75rem .4rem 0 0; }
+
+/* --- scaling update (Nov 2026) --- */
+.captcha-box { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); z-index: 50; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: .75rem 1rem; box-shadow: 0 6px 24px rgba(0,0,0,.15); visibility: hidden; }
+.captcha-box.show { visibility: visible; }
+.captcha-box p { margin: 0 0 .5rem; }
+.claim-bar { background: var(--soft); }
+.history ul { margin: .4rem 0 0; padding-left: 1.1rem; }
+.signup { margin-top: 1rem; }
+.signup form { margin-top: .6rem; }
+
+/* --- moderation (Nov 2026) --- */
+.photo-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
+.photo-wrap.blurred img { filter: blur(28px) saturate(.6); transform: scale(1.1); }
+.photo-wrap.blurred a { pointer-events: none; }
+.photo-wrap .reveal { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem;
+  background: rgba(0,0,0,.35); color: #fff; border: 0; font: inherit; cursor: pointer; text-align: center; padding: 1rem; }
+.photo-wrap .reveal span { font-size: .85rem; opacity: .9; }
+#screen-box { margin-bottom: .75rem; }
