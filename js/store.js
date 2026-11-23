@@ -1,9 +1,9 @@
 // Data layer. Same interface for Supabase (live) and IndexedDB (demo mode).
-import { SUPABASE_URL, SUPABASE_ANON_KEY, PHOTO_BUCKET, PENDING_BUCKET } from './config.js?v=14';
-import { SPECIES } from './species-data.js?v=14';
-import { captchaToken } from './captcha.js?v=14';
-import { prepareUpload, resizePhoto } from './image.js?v=14';
-import * as idb from './idb.js?v=14';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, PHOTO_BUCKET, PENDING_BUCKET } from './config.js?v=15';
+import { SPECIES } from './species-data.js?v=15';
+import { captchaToken } from './captcha.js?v=15';
+import { prepareUpload, resizePhoto } from './image.js?v=15';
+import * as idb from './idb.js?v=15';
 
 export const isDemo = !SUPABASE_URL;
 export const PAGE_SIZE = 48;

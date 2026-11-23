@@ -1,9 +1,9 @@
 // Public records: list, map, per-record detail, CSV export.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=14';
-import { $, esc } from './util.js?v=14';
-import { LABELS } from './metadata.js?v=14';
-import * as store from './store.js?v=14';
-import { DATASET } from './config.js?v=14';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=15';
+import { $, esc } from './util.js?v=15';
+import { LABELS } from './metadata.js?v=15';
+import * as store from './store.js?v=15';
+import { DATASET } from './config.js?v=15';
 
 const chips = r => `<span class="chips">${r.quality_grade ? `<span class="chip chip-${esc(r.quality_grade)}" title="${r.quality_grade === 'research' ? 'Identification confirmed by an expert or a second reviewer' : 'Identification confirmed by one reviewer'}">${esc(LABELS.quality[r.quality_grade])}</span>` : ''}${r.grp === 'ray' ? '<span class="chip chip-ray">Ray</span>' : ''}${r.context && r.context !== 'market' ? '<span class="chip chip-live">Live</span>' : ''}${r.individual_code ? `<span class="chip">${esc(r.individual_code)}</span>` : ''}</span>`;
 
@@ -77,7 +77,7 @@ async function showList() {
   $('#filter-species').innerHTML = `<option value="">All species (${summary.records})</option>` +
     `<optgroup label="Sharks">${opts('shark')}</optgroup><optgroup label="Rays">${opts('ray')}</optgroup>`;
   $('#filter-species').addEventListener('change', () => { renderMap(); loadPage(true); });
-  for (const id of ['#filter-context', '#filter-research']) $(id).addEventListener('change', () => loadPage(true));
+  for (const id of ['#filter-research']) $(id).addEventListener('change', () => loadPage(true));
   const pct = (a, b) => (b ? Math.round(100 * a / b) : 0) + '%';
   $('#stats').innerHTML = `
     <div class="stat"><b>${summary.sharks}</b><span>sharks counted</span></div>
@@ -96,7 +96,7 @@ async function showList() {
 let names = {};
 let offset = 0;
 const species = () => $('#filter-species').value;
-const filters = () => ({ context: $('#filter-context').value || undefined, research: $('#filter-research').checked || undefined });
+const filters = () => ({ research: $('#filter-research').checked || undefined });
 const filterKey = () => species() + JSON.stringify(filters());
 
 async function renderMap() {
@@ -182,7 +182,7 @@ $('#btn-dwc').addEventListener('click', async () => {
   try {
     const recs = await store.allPublicRecords('', n => { btn.textContent = `Darwin Core (${n}…)`; });
     const visits = await store.allPublicVisits();
-    const { downloadDwcA } = await import('./dwc.js?v=14');
+    const { downloadDwcA } = await import('./dwc.js?v=15');
     const n = await downloadDwcA(recs, visits, DATASET);
     toast(`Darwin Core Archive: ${n.occurrences} records and ${n.absences} absences`);
   } catch (e) { toast(e.message, 'err'); }

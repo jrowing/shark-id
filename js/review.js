@@ -1,11 +1,11 @@
 // Reviewer page: approve / correct / reject submissions, manage reference library.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast, ago } from './app.js?v=14';
-import { $, $$, esc, loadImage } from './util.js?v=14';
-import { LABELS } from './metadata.js?v=14';
-import { embed, MODEL_ID } from './classifier.js?v=14';
-import * as store from './store.js?v=14';
-import { FLAG_LABELS } from './screen.js?v=14';
-import { openMeasure } from './measure.js?v=14';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast, ago } from './app.js?v=15';
+import { $, $$, esc, loadImage } from './util.js?v=15';
+import { LABELS } from './metadata.js?v=15';
+import { embed, MODEL_ID } from './classifier.js?v=15';
+import * as store from './store.js?v=15';
+import { FLAG_LABELS } from './screen.js?v=15';
+import { openMeasure } from './measure.js?v=15';
 
 initShell('review');
 
@@ -256,7 +256,7 @@ function wireCard(r) {
   $('.btn-photoid', card)?.addEventListener('click', async () => {
     const spId = $('.sel-species', card)?.value || r.confirmed_species_id;
     if (!spId) return toast('Choose the species first', 'err');
-    const { openPhotoId } = await import('./photoid.js?v=14');
+    const { openPhotoId } = await import('./photoid.js?v=15');
     const res = await openPhotoId(r, spId, speciesById[spId]?.common_name || spId);
     if (res) { r.individual_id = res.individual_id; $('.btn-photoid', card).textContent = `Photo-ID (${res.code})`; toast(`Linked to ${res.code}`); }
   });

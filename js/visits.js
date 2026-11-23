@@ -5,8 +5,8 @@
 // found are the ordinary photo records, so together they show how often sharks
 // and rays turn up for sale.
 // (Stored in the `visits` table, with the start and end time the same.)
-import { currentPosition } from './metadata.js?v=14';
-import { enqueueVisit } from './queue.js?v=14';
+import { currentPosition } from './metadata.js?v=15';
+import { enqueueVisit } from './queue.js?v=15';
 
 export const KINDS = {
   market:   { label: 'Market or fish stall', icon: '🐟' },

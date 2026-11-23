@@ -1,10 +1,10 @@
 // Service worker: app works offline at the market; uploads resume when back online.
-const VERSION = 'shark-id-v14';
+const VERSION = 'shark-id-v15';
 const SHELL = [
   './', 'index.html', 'records.html', 'review.html', 'about.html', 'individuals.html', 'scale-card.html', 'manifest.webmanifest', 'css/app.css?v=6', 'icons/sharkive-wordmark.png?v=2', 'icons/icon-192.png', 'icons/favicon-a-64.png?v=1', 'icons/favicon-a-dark-64.png?v=1',
-  'js/app.js?v=14', 'js/camera.js?v=14', 'js/capture.js?v=14', 'js/captcha.js?v=14', 'js/image.js?v=14', 'js/screen.js?v=14', 'js/classifier.js?v=14', 'js/config.js?v=14', 'js/idb.js?v=14', 'js/metadata.js?v=14',
-  'js/queue.js?v=14', 'js/records.js?v=14', 'js/review.js?v=14', 'js/species-data.js?v=14', 'js/store.js?v=14', 'js/util.js?v=14',
-  'js/visits.js?v=14', 'js/measure.js?v=14', 'js/dwc.js?v=14', 'js/individuals.js?v=14', 'js/photoid.js?v=14', 'js/photoid-core.js?v=14',
+  'js/app.js?v=15', 'js/camera.js?v=15', 'js/capture.js?v=15', 'js/captcha.js?v=15', 'js/image.js?v=15', 'js/screen.js?v=15', 'js/classifier.js?v=15', 'js/config.js?v=15', 'js/idb.js?v=15', 'js/metadata.js?v=15',
+  'js/queue.js?v=15', 'js/records.js?v=15', 'js/review.js?v=15', 'js/species-data.js?v=15', 'js/store.js?v=15', 'js/util.js?v=15',
+  'js/visits.js?v=15', 'js/measure.js?v=15', 'js/dwc.js?v=15', 'js/individuals.js?v=15', 'js/photoid.js?v=15', 'js/photoid-core.js?v=15',
 ];
 // Libraries and model weights: cache on first use, then serve from cache.
 const CACHE_FIRST_HOSTS = ['cdn.jsdelivr.net', 'tfhub.dev', 'www.kaggle.com', 'storage.googleapis.com', 'kaggle.com'];
