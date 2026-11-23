@@ -1,9 +1,9 @@
 // Public records: list, map, per-record detail, CSV export.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=13';
-import { $, esc } from './util.js?v=13';
-import { LABELS } from './metadata.js?v=13';
-import * as store from './store.js?v=13';
-import { DATASET } from './config.js?v=13';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=14';
+import { $, esc } from './util.js?v=14';
+import { LABELS } from './metadata.js?v=14';
+import * as store from './store.js?v=14';
+import { DATASET } from './config.js?v=14';
 
 const chips = r => `<span class="chips">${r.quality_grade ? `<span class="chip chip-${esc(r.quality_grade)}" title="${r.quality_grade === 'research' ? 'Identification confirmed by an expert or a second reviewer' : 'Identification confirmed by one reviewer'}">${esc(LABELS.quality[r.quality_grade])}</span>` : ''}${r.grp === 'ray' ? '<span class="chip chip-ray">Ray</span>' : ''}${r.context && r.context !== 'market' ? '<span class="chip chip-live">Live</span>' : ''}${r.individual_code ? `<span class="chip">${esc(r.individual_code)}</span>` : ''}</span>`;
 
@@ -103,12 +103,28 @@ async function renderMap() {
   const want = species();
   let pts;
   try { pts = await store.recordPoints(want); } catch (e) { console.warn(e); return; }
+  // "Nothing for sale" checks, in grey, when no species is chosen.
+  let zero = [];
+  if (!want) {
+    try { zero = (await (visitsPromise ??= store.allPublicVisits())).filter(v => !v.approved_sightings); }
+    catch (e) { console.warn(e); }
+  }
   if (want !== species()) return;
-  showMap($('#all-map'), pts.map(r => ({
-    lat: r.lat, lon: r.lon,
-    popup: () => `<a href="records.html?id=${encodeURIComponent(r.id)}"><b>${esc(names[r.species_id] || r.species_id)}${(r.shark_count ?? 1) > 1 ? ` × ${r.shark_count}` : ''}</b></a><br>${esc(new Date(r.taken_at).toLocaleDateString())}`,
-  })));
+  showMap($('#all-map'), [
+    ...zero.map(v => ({
+      lat: v.lat, lon: v.lon, color: '#8a939b',
+      popup: () => `<b>Nothing for sale</b><br>${esc(v.site_name || (v.kind === 'roadside' ? 'Roadside seller' : 'Market'))}<br>${esc(new Date(v.started_at).toLocaleDateString())}`,
+    })),
+    ...pts.map(r => ({
+      lat: r.lat, lon: r.lon,
+      popup: () => `<a href="records.html?id=${encodeURIComponent(r.id)}"><b>${esc(names[r.species_id] || r.species_id)}${(r.shark_count ?? 1) > 1 ? ` × ${r.shark_count}` : ''}</b></a><br>${esc(new Date(r.taken_at).toLocaleDateString())}`,
+    })),
+  ]);
+  $('#map-note').innerHTML = want
+    ? 'The map shows every record of the chosen species.'
+    : '<span class="dot dot-rec"></span> confirmed records &nbsp; <span class="dot dot-zero"></span> "nothing for sale" checks';
 }
+let visitsPromise = null;
 
 async function loadPage(reset) {
   const grid = $('#record-grid'), more = $('#btn-more');
@@ -166,7 +182,7 @@ $('#btn-dwc').addEventListener('click', async () => {
   try {
     const recs = await store.allPublicRecords('', n => { btn.textContent = `Darwin Core (${n}…)`; });
     const visits = await store.allPublicVisits();
-    const { downloadDwcA } = await import('./dwc.js?v=13');
+    const { downloadDwcA } = await import('./dwc.js?v=14');
     const n = await downloadDwcA(recs, visits, DATASET);
     toast(`Darwin Core Archive: ${n.occurrences} records and ${n.absences} absences`);
   } catch (e) { toast(e.message, 'err'); }
@@ -182,7 +198,7 @@ async function renderEffort() {
   const box = $('#effort-table');
   let market;
   try {
-    [visitRows, market] = await Promise.all([store.allPublicVisits(), store.allPublicRecords('', () => {}, { context: 'market' })]);
+    [visitRows, market] = await Promise.all([visitsPromise ??= store.allPublicVisits(), store.allPublicRecords('', () => {}, { context: 'market' })]);
   } catch (e) { box.innerHTML = `<p class="small muted">${esc(e.message)}</p>`; return; }
   const zero = visitRows.filter(v => !v.approved_sightings);
   if (!zero.length && !market.length) { box.innerHTML = '<p class="muted small">No market records yet.</p>'; return; }

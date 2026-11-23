@@ -1,7 +1,7 @@
 // Cloudflare Turnstile: proves a contributor's phone is a person, once per phone.
 // Usually invisible; occasionally shows a one-tap check.
-import { TURNSTILE_SITE_KEY } from './config.js?v=13';
-import { loadScript } from './util.js?v=13';
+import { TURNSTILE_SITE_KEY } from './config.js?v=14';
+import { loadScript } from './util.js?v=14';
 
 const SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 

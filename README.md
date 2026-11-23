@@ -80,8 +80,8 @@ Run `supabase/population-2026-11.sql` in the SQL Editor after `scale-2026-11.sql
 
 ## Deploying an update
 
-Every module import carries a version query (`?v=13`), and so do the `<script>` tags and the service worker's file list. **Bump it on every deploy** that changes JavaScript, for example with
-`grep -rl '?v=13' js *.html sw.js | xargs sed -i '' 's/?v=13/?v=14/g'` (macOS sed) and `shark-id-v13` → `shark-id-v14` in `sw.js`.
+Every module import carries a version query (`?v=14`), and so do the `<script>` tags and the service worker's file list. **Bump it on every deploy** that changes JavaScript, for example with
+`grep -rl '?v=14' js *.html sw.js | xargs sed -i '' 's/?v=14/?v=15/g'` (macOS sed) and `shark-id-v14` → `shark-id-v15` in `sw.js`.
 GitHub Pages caches files for about 10 minutes. Without new URLs, phones can get a mix of new and old modules after a deploy, and the page fails to start.
 
 ## Next steps

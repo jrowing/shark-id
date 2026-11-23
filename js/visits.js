@@ -5,20 +5,25 @@
 // found are the ordinary photo records, so together they show how often sharks
 // and rays turn up for sale.
 // (Stored in the `visits` table, with the start and end time the same.)
-import { currentPosition } from './metadata.js?v=13';
-import { enqueueVisit } from './queue.js?v=13';
+import { currentPosition } from './metadata.js?v=14';
+import { enqueueVisit } from './queue.js?v=14';
 
 export const KINDS = {
   market:   { label: 'Market or fish stall', icon: '🐟' },
   roadside: { label: 'Roadside seller',      icon: '🛻' },
 };
 
-// Records "nothing here" now, at this spot. Needs a live GPS fix.
-export async function nothingHere({ kind, site_name = null, notes = null }) {
-  if (!KINDS[kind]) throw new Error('Choose market or roadside seller');
-  let pos;
-  try { pos = await currentPosition(30000); }
+// A fresh GPS fix, with a friendly error.
+export async function fix() {
+  try { return await currentPosition(30000); }
   catch (e) { throw new Error(e.code === 1 ? 'Allow location access so the record knows where it is.' : 'Could not get a GPS fix. Move into the open and try again.'); }
+}
+
+// Records "nothing here" now, at this spot. Uses the fix shown on screen if it's
+// under 2 minutes old, otherwise takes a new one.
+export async function nothingHere({ kind, site_name = null, notes = null, position = null }) {
+  if (!KINDS[kind]) throw new Error('Choose market or roadside seller');
+  const pos = position && Date.now() - position.timestamp < 120000 ? position : await fix();
   const now = new Date();
   const record = {
     id: crypto.randomUUID(), kind,

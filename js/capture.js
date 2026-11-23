@@ -1,16 +1,16 @@
 // "Log a shark" page.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=13';
-import { $, $$, esc, loadImage } from './util.js?v=13';
-import { Camera } from './camera.js?v=13';
-import { readFileMetadata, currentPosition, checkTime, LABELS } from './metadata.js?v=13';
-import * as visits from './visits.js?v=13';
-import { openMeasure } from './measure.js?v=13';
-import { embed, aggregate, rankCentroids, MODEL_ID } from './classifier.js?v=13';
-import { AI } from './config.js?v=13';
-import { listSpecies, matchSpecies, speciesCentroids, isDemo } from './store.js?v=13';
-import { prepareUpload } from './image.js?v=13';
-import { screenPhoto, NOT_SCREENED } from './screen.js?v=13';
-import { enqueue } from './queue.js?v=13';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=14';
+import { $, $$, esc, loadImage } from './util.js?v=14';
+import { Camera } from './camera.js?v=14';
+import { readFileMetadata, currentPosition, checkTime, LABELS } from './metadata.js?v=14';
+import * as visits from './visits.js?v=14';
+import { openMeasure } from './measure.js?v=14';
+import { embed, aggregate, rankCentroids, MODEL_ID } from './classifier.js?v=14';
+import { AI } from './config.js?v=14';
+import { listSpecies, matchSpecies, speciesCentroids, isDemo } from './store.js?v=14';
+import { prepareUpload } from './image.js?v=14';
+import { screenPhoto, NOT_SCREENED } from './screen.js?v=14';
+import { enqueue } from './queue.js?v=14';
 
 initShell('log');
 const submitLabel = $('#btn-submit').textContent;
@@ -42,10 +42,28 @@ $$('.ctx-btn').forEach(b => b.addEventListener('click', () => { context = b.data
 $('#btn-back-visit').addEventListener('click', () => { context = null; renderMode(); });
 
 // "Nothing for sale here": a zero record, saved in one tap.
+let nothingPos = null;
+async function locateNothing() {
+  const box = $('#nothing-where');
+  box.innerHTML = '<span class="spinner"></span> Getting your location…';
+  try {
+    nothingPos = await visits.fix();
+    const c = nothingPos.coords, acc = Math.round(c.accuracy);
+    box.innerHTML = `<strong>${esc(fmtCoord(c.latitude, c.longitude))}</strong> <span class="muted">±${acc} m</span>` +
+      (acc > 150 ? ' <span class="warn-text">Weak GPS: move into the open if you can.</span>' : '') +
+      ' <button class="linklike" id="btn-relocate" type="button">Update</button>';
+    $('#btn-relocate').addEventListener('click', locateNothing);
+    showMap($('#nothing-map'), [{ lat: c.latitude, lon: c.longitude, accuracy: acc, color: '#8a939b' }], { zoom: 16 });
+  } catch (e) {
+    nothingPos = null;
+    box.innerHTML = `<span class="warn-text">${esc(e.message)}</span> <button class="linklike" id="btn-relocate" type="button">Try again</button>`;
+    $('#btn-relocate').addEventListener('click', locateNothing);
+  }
+}
 $('#btn-show-nothing').addEventListener('click', () => {
   $('#nothing-form').hidden = !$('#nothing-form').hidden;
   $('#btn-show-nothing').classList.toggle('chosen', !$('#nothing-form').hidden);
-  if (!$('#nothing-form').hidden) $('#nothing-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (!$('#nothing-form').hidden) { locateNothing(); $('#nothing-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 });
 $('#btn-nothing').addEventListener('click', async () => {
   const btn = $('#btn-nothing'), label = btn.textContent;
@@ -54,8 +72,9 @@ $('#btn-nothing').addEventListener('click', async () => {
     const site_name = $('#nothing-site').value.trim() || null;
     if (site_name) rememberSite(site_name);
     const kind = document.querySelector('input[name="nothing-kind"]:checked')?.value || 'market';
-    await visits.nothingHere({ kind, site_name, notes: $('#nothing-notes').value.trim() || null });
-    toast(`Saved: no sharks or rays at ${site_name || 'this spot'}. Thank you, zero records count too!`);
+    const v = await visits.nothingHere({ kind, site_name, notes: $('#nothing-notes').value.trim() || null, position: nothingPos });
+    toast(`Saved: no sharks or rays at ${site_name || fmtCoord(v.lat, v.lon)}. Thank you, zero records count too!`);
+    nothingPos = null;
     $('#nothing-site').value = ''; $('#nothing-notes').value = '';
     $('#nothing-form').hidden = true; $('#btn-show-nothing').classList.remove('chosen');
   } catch (e) { toast(e.message, 'err'); }

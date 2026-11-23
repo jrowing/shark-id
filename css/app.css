@@ -295,3 +295,7 @@ body.no-scroll { overflow: hidden; }
 .sc-foot { font-size: 7.5pt; margin-top: 2mm; color: #333; }
 @media screen and (max-width: 900px) { .sheet { overflow-x: auto; align-items: flex-start; } }
 @media print { .sc-bar .b { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .scale-card { break-inside: avoid; } }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line-2); vertical-align: -1px; }
+.dot-rec { background: #0e7c74; } .dot-zero { background: #8a939b; }
+#nothing-map { height: 160px; margin-top: .35rem; }
+#nothing-where { color: var(--ink); font-weight: 400; margin-top: .3rem; }

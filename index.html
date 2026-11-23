@@ -41,6 +41,10 @@
             <label><input type="radio" name="nothing-kind" value="roadside"> Roadside seller</label>
           </div>
         </fieldset>
+        <div class="field">Location
+          <div id="nothing-where" class="small"></div>
+          <div id="nothing-map" class="map small-map"></div>
+        </div>
         <label class="field">Place name
           <input id="nothing-site" type="text" maxlength="120" placeholder="e.g. Baie Ste Anne market, roadside Grand Anse" autocomplete="off" list="site-list">
         </label>
@@ -48,7 +52,7 @@
           <input id="nothing-notes" type="text" maxlength="1000" placeholder="e.g. only one stall open">
         </label>
         <button id="btn-nothing" class="btn primary big">Save: nothing here</button>
-        <p class="small muted">The time and place come from your phone's clock and GPS.</p>
+        <p class="small muted">The time and place come from your phone's clock and GPS when you save.</p>
       </div>
 
       <h2 class="live-head">A live shark or ray</h2>
@@ -196,6 +200,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/capture.js?v=13"></script>
+  <script type="module" src="js/capture.js?v=14"></script>
 </body>
 </html>

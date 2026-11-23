@@ -2,8 +2,8 @@
 // Rule: the capture time always comes from the photo itself (EXIF) or from the
 // in-app shutter — never typed in by the user, never the file's modified date.
 // Photos without a trustworthy capture time are rejected.
-import { RULES } from './config.js?v=13';
-import { loadScript } from './util.js?v=13';
+import { RULES } from './config.js?v=14';
+import { loadScript } from './util.js?v=14';
 
 const EXIFR_URL = 'https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.esm.mjs';
 const PIEXIF_URL = 'https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.js';

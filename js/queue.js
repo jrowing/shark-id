@@ -1,8 +1,8 @@
 // Offline-first submission queue: everything is saved locally first, then
 // uploaded whenever there is a connection (markets often have poor signal).
 // Failed attempts keep their error message so the user can see what went wrong.
-import * as idb from './idb.js?v=13';
-import { submit, submitVisit } from './store.js?v=13';
+import * as idb from './idb.js?v=14';
+import { submit, submitVisit } from './store.js?v=14';
 
 const ATTEMPT_TIMEOUT_MS = 120000;
 let flushing = null;
