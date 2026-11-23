@@ -5,7 +5,7 @@
 //    rays and a dozen other fish), plus similarity to confirmed shark photos.
 // This runs on the phone, so a determined person could skip it. It stops casual
 // misuse and wrong-photo mistakes, and tells reviewers what to look at carefully.
-import { loadModel as loadMobileNet, loadTf } from './classifier.js';
+import { loadModel as loadMobileNet, loadTf } from './classifier.js?v=12';
 
 export const SCREEN_VERSION = 1;
 const NSFW_MODEL = new URL('../models/nsfw/model.json', import.meta.url).href;

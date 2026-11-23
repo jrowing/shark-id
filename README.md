@@ -78,6 +78,12 @@ Run `supabase/population-2026-11.sql` in the SQL Editor after `scale-2026-11.sql
 | **Research grade** | `quality_grade()`: *research* = approved, and the ID was confirmed by an expert/admin or agreed by a second reviewer, nobody has disagreed since, the species is identified, and time/place came from trusted sources. Otherwise *verified*. The **Second opinion** review tab serves records that need one. Disagreeing sends the record back to the expert queue. |
 | **Darwin Core** | Records → *Darwin Core* downloads a DwC-A zip (occurrence core) for GBIF/OBIS. Zero visits become `absent` occurrences of Elasmobranchii. Dataset title, contact and **licence** are in `DATASET` in `js/config.js`: choose the licence before publishing. |
 
+## Deploying an update
+
+Every module import carries a version query (`?v=12`), and so do the `<script>` tags and the service worker's file list. **Bump it on every deploy** that changes JavaScript, for example with
+`grep -rl '?v=12' js *.html sw.js | xargs sed -i '' 's/?v=12/?v=13/g'` (macOS sed) and `shark-id-v12` → `shark-id-v13` in `sw.js`.
+GitHub Pages caches files for about 10 minutes. Without new URLs, phones can get a mix of new and old modules after a deploy, and the page fails to start.
+
 ## Next steps
 
 - **Fine-tuned model**: once there are a few hundred approved records, export images and labels and fine-tune EfficientNet/MobileNet in Python, convert it to TF.js, then change `MODEL_ID` and `embed()` in `classifier.js` (or swap kNN for the model's softmax output). Old embeddings are tagged with their model, so nothing gets mixed up.

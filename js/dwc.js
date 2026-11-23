@@ -2,7 +2,7 @@
 // One occurrence per approved record (present), plus one "absent" occurrence of
 // sharks and rays (Elasmobranchii) for each market visit where nothing was approved.
 // The pure functions are unit-tested; downloadDwcA() packs them into a zip.
-import { loadScript } from './util.js';
+import { loadScript } from './util.js?v=12';
 
 export const TERMS = [
   'occurrenceID', 'basisOfRecord', 'occurrenceStatus', 'eventID', 'eventDate', 'samplingProtocol', 'samplingEffort',

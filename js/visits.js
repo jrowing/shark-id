@@ -4,8 +4,8 @@
 // from the phone (clock + live GPS), never typed in. Sightings logged during it
 // carry its id. A visit with no sightings is a ZERO RECORD: it says "we looked
 // here and saw none", which is what lets the data show how often sharks turn up.
-import { currentPosition } from './metadata.js';
-import { enqueueVisit } from './queue.js';
+import { currentPosition } from './metadata.js?v=12';
+import { enqueueVisit } from './queue.js?v=12';
 
 // Visits are only for markets and roadside sellers. Live animals (in the water,
 // in the shallows) are logged as photo records with no visit.

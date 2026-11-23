@@ -1,7 +1,7 @@
 // In-app camera. The shutter press is the capture time; GPS is watched the
 // whole time the camera is open so a fix is ready at the moment of capture.
-import { RULES } from './config.js';
-import { embedExif } from './metadata.js';
+import { RULES } from './config.js?v=12';
+import { embedExif } from './metadata.js?v=12';
 
 export class Camera {
   constructor(video, onStatus) {

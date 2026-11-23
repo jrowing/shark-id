@@ -1,7 +1,7 @@
 // Public catalogue of individually recognised animals.
-import { initShell, fmtTaken, fmtCoord, showMap, toast } from './app.js';
-import { $, esc } from './util.js';
-import * as store from './store.js';
+import { initShell, fmtTaken, fmtCoord, showMap, toast } from './app.js?v=12';
+import { $, esc } from './util.js?v=12';
+import * as store from './store.js?v=12';
 
 initShell('records');
 
