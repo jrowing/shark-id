@@ -10,7 +10,7 @@
   <link rel="icon" href="icons/favicon-a-64.png?v=1" type="image/png">
   <link rel="icon" href="icons/favicon-a-dark-64.png?v=1" type="image/png" media="(prefers-color-scheme: dark)">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/app.css?v=5">
+  <link rel="stylesheet" href="css/app.css?v=6">
 </head>
 <body>
   <header class="top">
@@ -30,14 +30,35 @@
       <div class="toolbar">
         <h1>Confirmed records</h1>
         <div class="btn-row">
-          <select id="filter-species"><option value="">All species</option></select>
-          <button id="btn-csv" class="btn">CSV</button>
+          <a class="btn" href="individuals.html">Individuals</a>
         </div>
       </div>
       <div id="stats" class="stats"></div>
+      <div class="toolbar filters">
+        <div class="btn-row">
+          <select id="filter-species"><option value="">All species</option></select>
+          <select id="filter-context">
+            <option value="">Landed and live</option>
+            <option value="market">Landed or for sale</option>
+            <option value="live">Live (in the water, shallows)</option>
+          </select>
+          <label class="check small"><input type="checkbox" id="filter-research"> Research grade only</label>
+        </div>
+        <div class="btn-row">
+          <button id="btn-csv" class="btn">CSV</button>
+          <button id="btn-dwc" class="btn" title="Darwin Core Archive for GBIF and OBIS, including zero visits as absences">Darwin Core</button>
+        </div>
+      </div>
+      <p class="small muted" id="map-note">The map shows every record of the chosen species.</p>
       <div id="all-map" class="map big-map"></div>
       <div id="record-grid" class="record-grid"></div>
       <p class="center"><button id="btn-more" class="btn" hidden>Load more</button></p>
+
+      <section class="card effort" id="effort">
+        <div class="toolbar"><h2>Market visits</h2><button id="btn-visits-csv" class="btn">Visits CSV</button></div>
+        <p class="small muted">Every check of a market or roadside seller is a visit, including those with no sharks or rays. Comparing visits with and without sightings shows how often sharks and rays turn up for sale, which records alone can't.</p>
+        <div id="effort-table"></div>
+      </section>
     </section>
 
     <!-- detail view -->

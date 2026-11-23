@@ -32,3 +32,15 @@ export const AI = {
   // if the default TF Hub/Kaggle download is blocked or slow.
   modelUrl: '',
 };
+
+// Dataset description used in the Darwin Core Archive export (Records page →
+// "Darwin Core"). Check the licence before publishing to GBIF/OBIS: CC BY 4.0 is
+// the common choice for citizen-science data, but it's your decision.
+export const DATASET = {
+  title: 'The Sharkive: sharks and rays landed, sold and seen in Seychelles',
+  publisher: 'The Sharkive',
+  contact: { name: 'Joe Rowing', email: '' },
+  license: 'http://creativecommons.org/licenses/by/4.0/legalcode',
+  licenseName: 'Creative Commons Attribution (CC BY) 4.0',
+  homepage: 'https://www.jrowing.com/shark-id/',
+};

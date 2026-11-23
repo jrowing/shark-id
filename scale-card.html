@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Sharkive — scale card</title>
+  <meta name="description" content="Printable scale card for measuring sharks and rays from photos.">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-title" content="Sharkive">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon-a-64.png?v=1" type="image/png">
+  <link rel="icon" href="icons/favicon-a-dark-64.png?v=1" type="image/png" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css?v=6">
+  <style>@page { size: A4 landscape; margin: 10mm; }</style>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="The Sharkive"><img class="brand-logo" width="213" height="22" src="icons/sharkive-wordmark.png?v=2" alt="The Sharkive"><img class="brand-icon" width="30" height="30" src="icons/icon-192.png" alt=""></a>
+    <nav>
+      <a href="index.html" data-page="log">Log</a>
+      <a href="records.html" data-page="records">Records</a>
+      <a href="about.html" data-page="about">About</a>
+      <a href="review.html" data-page="review">Review</a>
+    </nav>
+    <span id="status" class="status">…</span>
+  </header>
+
+  <main class="wrap wide-wrap">
+    <section class="card no-print" style="max-width:720px;margin:0 auto 1rem">
+      <h1>Sharkive scale card</h1>
+      <p>Lay this card flat next to a shark or ray before you photograph it. In the app, tap the two ends of the black-and-white bar, then the two ends of the animal, and the app works out its length.</p>
+      <ol>
+        <li><strong>Print at actual size</strong> (100%, "no scaling", not "fit to page").</li>
+        <li><strong>Check it:</strong> the bar must measure exactly 20 cm with a ruler. If not, the printer scaled it.</li>
+        <li>Laminate it or put it in a plastic sleeve so it survives fish scales and sea water.</li>
+      </ol>
+      <p class="small muted">For the best estimate, put the card right beside the animal (not in front of it or behind it), and take the photo from far enough away that the whole animal is in the frame without tilting the phone.</p>
+      <button class="btn primary" onclick="window.print()">Print</button>
+    </section>
+    <section class="sheet">
+      <div class="scale-card">
+        <div class="sc-head"><img src="icons/sharkive-wordmark.png?v=2" alt="The Sharkive" height="16"><span>20 cm scale · lay flat beside the animal</span></div>
+        <div class="sc-bar"><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span></div>
+        <div class="sc-ticks"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20 cm</span></div>
+        <div class="sc-foot">Photograph from directly above (rays) or square-on to the side (sharks), with the card at the same distance as the animal.</div>
+      </div>
+      <div class="scale-card">
+        <div class="sc-head"><img src="icons/sharkive-wordmark.png?v=2" alt="The Sharkive" height="16"><span>20 cm scale · lay flat beside the animal</span></div>
+        <div class="sc-bar"><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span></div>
+        <div class="sc-ticks"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20 cm</span></div>
+        <div class="sc-foot">Photograph from directly above (rays) or square-on to the side (sharks), with the card at the same distance as the animal.</div>
+      </div>
+      <div class="scale-card">
+        <div class="sc-head"><img src="icons/sharkive-wordmark.png?v=2" alt="The Sharkive" height="16"><span>20 cm scale · lay flat beside the animal</span></div>
+        <div class="sc-bar"><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span><span class="b"></span><span class="w"></span></div>
+        <div class="sc-ticks"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20 cm</span></div>
+        <div class="sc-foot">Photograph from directly above (rays) or square-on to the side (sharks), with the card at the same distance as the animal.</div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initShell } from './js/app.js';
+    initShell('log');
+  </script>
+</body>
+</html>

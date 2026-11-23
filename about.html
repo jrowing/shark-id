@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>The Sharkive — about the project</title>
-  <meta name="description" content="The Sharkive is a citizen-science record of sharks landed and sold at markets in Seychelles, building long-term data to understand shark populations and support conservation.">
+  <meta name="description" content="The Sharkive is a citizen-science record of sharks and rays landed and sold at markets in Seychelles, and seen alive in the sea, building long-term data to understand their populations and support conservation.">
   <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-title" content="Sharkive">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/favicon-a-64.png?v=1" type="image/png">
   <link rel="icon" href="icons/favicon-a-dark-64.png?v=1" type="image/png" media="(prefers-color-scheme: dark)">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/app.css?v=5">
+  <link rel="stylesheet" href="css/app.css?v=6">
 </head>
 <body>
   <header class="top">
@@ -28,15 +28,15 @@
   <main class="wrap about">
     <section class="card hero">
       <h1>About The Sharkive</h1>
-      <p class="lead">A shared, photo-based record of the sharks landed and sold at markets and roadside stalls in Seychelles. It's built so that, over time, the data can show which species are being caught, where, and whether that is changing.</p>
-      <a class="btn primary" href="index.html">Log a shark</a>
+      <p class="lead">A shared, photo-based record of the sharks and rays landed and sold at markets and roadside stalls in Seychelles, and of those seen alive in the sea. It's built so that, over time, the data can show which species are being caught, where, and whether that is changing.</p>
+      <a class="btn primary" href="index.html">Log a shark or ray</a>
       <a class="btn" href="records.html">See the records</a>
     </section>
 
     <section class="card">
       <h2>Why it matters</h2>
-      <p>Sharks grow slowly, mature late and have few young, so their populations recover slowly once they decline. Many of the species found in the western Indian Ocean are listed as threatened on the IUCN Red List.</p>
-      <p>Catches from small-scale and artisanal fishing, the sharks you see on a market table or at the roadside, are often not recorded in any detail. Without that information it's hard to know which species are being caught, how big they are, or whether things are getting better or worse.</p>
+      <p>Sharks and rays grow slowly, mature late and have few young, so their populations recover slowly once they decline. Many of the species found in the western Indian Ocean are listed as threatened on the IUCN Red List. Wedgefishes and giant guitarfishes, the "shark-like rays" sometimes sold alongside sharks, are among the most threatened marine fish of all.</p>
+      <p>Catches from small-scale and artisanal fishing, the sharks and rays you see on a market table or at the roadside, are often not recorded in any detail. Without that information it's hard to know which species are being caught, how big they are, or whether things are getting better or worse.</p>
     </section>
 
     <section class="card">
@@ -44,9 +44,12 @@
       <p>The aim is to build a long-term record that can, one day, be used to:</p>
       <ul>
         <li><strong>Show which species are landed</strong>, including how often threatened species turn up.</li>
-        <li><strong>Track change over time</strong>: in the species mix, in the sizes of sharks landed, and across seasons and years.</li>
+        <li><strong>Track change over time</strong>: in the species mix, in the sizes of animals landed (and how many are juveniles), and across seasons and years.</li>
+        <li><strong>Show how often sharks and rays turn up</strong>: market visits are recorded even when there are none for sale, so the records can be compared with the effort behind them.</li>
+        <li><strong>Compare markets with the sea</strong>: sightings of live sharks and rays by divers, snorkellers and beach walkers sit alongside the market records.</li>
+        <li><strong>Follow individual animals</strong>: species with unique markings, like zebra sharks and eagle rays, can be recognised from photos, so repeat sightings build a life history. See <a href="individuals.html">Individuals</a>.</li>
         <li><strong>Map where sharks are landed and sold</strong> around the islands.</li>
-        <li><strong>Support conservation and fisheries management</strong> by sharing the data with researchers, conservation groups and the relevant authorities.</li>
+        <li><strong>Support conservation and fisheries management</strong> by sharing the data openly. The <a href="records.html">Records</a> page exports a Darwin Core Archive, the standard format used by GBIF and OBIS, the global biodiversity databases.</li>
       </ul>
       <p>Conclusions about populations need a lot of data collected consistently over a long time. Every record adds to that, and the more people who log what they see, the more useful it becomes.</p>
     </section>
@@ -54,10 +57,10 @@
     <section class="card">
       <h2>How it works</h2>
       <ol class="steps">
-        <li><strong>Photograph</strong> a shark you see for sale or landed.</li>
+        <li><strong>At a market, start a visit.</strong> Then photograph each shark or ray you see. If there are none, tap <em>Nothing here today</em>: that's a useful record too. Live animals in the water or the shallows are logged as single photos.</li>
         <li><strong>When and where are recorded automatically</strong> from the photo itself, so every record has a reliable date, time and location. They can't be typed in or changed.</li>
         <li><strong>A species suggestion</strong> is made on your phone by comparing the photo with photos that have already been confirmed. It is a matching tool, not a generative AI, and it improves as more photos are confirmed.</li>
-        <li><strong>A reviewer checks every record</strong> and confirms the species before it's added to the database.</li>
+        <li><strong>A reviewer checks every record</strong> and confirms the species (and, where the claspers are visible, the sex) before it's added to the database. When an expert or a second reviewer agrees, the record becomes <strong>research grade</strong>.</li>
         <li><strong>Confirmed records are published</strong> on the <a href="records.html">Records</a> page, with a map and a downloadable data file.</li>
       </ol>
     </section>
@@ -65,9 +68,12 @@
     <section class="card">
       <h2>Taking a useful photo</h2>
       <ul>
-        <li>Show the <strong>whole shark from the side</strong> if you can, with the fins and tail visible. The shape of the head, the dorsal fins and the tail markings are the main clues to the species.</li>
+        <li>Show the <strong>whole shark from the side</strong> if you can, with the fins and tail visible. The shape of the head, the dorsal fins and the tail markings are the main clues to the species. Photograph <strong>rays from above</strong>.</li>
+        <li>Lay a <a href="scale-card.html">Sharkive scale card</a> (or a tape, or a sheet of A4) flat beside the animal, so its length can be measured from the photo.</li>
+        <li>If you can, add a photo of the <strong>underside behind the pelvic fins</strong>: males have two claspers there, females have none.</li>
         <li>Use the <strong>in-app camera</strong>, or an original photo from your camera roll. Photos forwarded through WhatsApp or Messenger lose their time and location and can't be used.</li>
-        <li>Enter the <strong>number of sharks</strong> in the photo. If there are several species, log each one separately.</li>
+        <li>Enter the <strong>number of animals</strong> in the photo. If there are several species, log each one separately.</li>
+        <li>In the sea, <strong>never chase, touch or crowd</strong> a shark or ray for a photo.</li>
         <li>Frame the <strong>shark, not people</strong>. Please avoid including faces.</li>
         <li><strong>Always ask before photographing</strong> someone's stall or catch.</li>
       </ul>
@@ -75,13 +81,13 @@
 
     <section class="card">
       <h2>This is about sharks, not people</h2>
-      <p>The Sharkive records what is caught. It isn't about who caught or sold it. It doesn't collect the names of fishers or vendors, and it isn't an enforcement tool. Fishers and vendors know more about sharks than almost anyone, and their cooperation is what makes a record like this possible.</p>
+      <p>The Sharkive records what is caught and seen. It isn't about who caught or sold it. It doesn't collect the names of fishers or vendors, and it isn't an enforcement tool. Fishers and vendors know more about sharks than almost anyone, and their cooperation is what makes a record like this possible.</p>
     </section>
 
     <section class="card">
       <h2>Your data</h2>
       <ul>
-        <li>No account is needed to log a shark, and no personal details are collected. Your phone is given a random, anonymous ID the first time it uploads, so the app can limit spam. It isn't linked to your name, number or email.</li>
+        <li>No account is needed to log a shark or ray, and no personal details are collected. Your phone is given a random, anonymous ID the first time it uploads, so the app can limit spam. It isn't linked to your name, number or email.</li>
         <li>Photos stay private until a reviewer approves them. Before anything is uploaded, the app checks on your phone that the photo looks like a shark and isn't inappropriate.</li>
         <li>Each record stores the photo, when and where it was taken, the place name and details you add, and the type of device used.</li>
         <li>Published records show the photo, species, date, time and location.</li>
@@ -91,7 +97,14 @@
     <section class="card">
       <h2>Who runs it</h2>
       <p>The Sharkive is an independent citizen-science project run from Praslin, Seychelles.</p>
-      <!-- Add a contact email, partner organisations, or how to get involved here. -->
+      <!-- Add a contact email here. -->
+    </section>
+
+    <section class="card signpost" id="more-ways">
+      <h2>More ways to help sharks and rays in Seychelles</h2>
+      <p>If you'd like to do more than log what you see, the <strong>Marine Conservation Society Seychelles (MCSS)</strong> is a Seychelles non-profit founded in 1997 that works on marine conservation across the islands. Its work includes research on sharks and rays, sea turtle conservation, coral reef restoration and environmental education. Its website has details of current projects and ways to get involved.</p>
+      <a class="btn" href="https://www.mcss.sc/" target="_blank" rel="noopener">Visit mcss.sc ↗</a>
+      <p class="small muted">The Sharkive is independent. It isn't part of, affiliated with or endorsed by MCSS, and MCSS isn't responsible for this app or its data. We link to them simply because they're a good place to start.</p>
     </section>
   </main>
 

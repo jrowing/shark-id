@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Sharkive — individuals</title>
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-title" content="Sharkive">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon-a-64.png?v=1" type="image/png">
+  <link rel="icon" href="icons/favicon-a-dark-64.png?v=1" type="image/png" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css?v=6">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="The Sharkive"><img class="brand-logo" width="213" height="22" src="icons/sharkive-wordmark.png?v=2" alt="The Sharkive"><img class="brand-icon" width="30" height="30" src="icons/icon-192.png" alt=""></a>
+    <nav>
+      <a href="index.html" data-page="log">Log</a>
+      <a href="records.html" data-page="records">Records</a>
+      <a href="about.html" data-page="about">About</a>
+      <a href="review.html" data-page="review">Review</a>
+    </nav>
+    <span id="status" class="status">…</span>
+  </header>
+
+  <main class="wrap wide-wrap">
+    <div class="toolbar">
+      <h1>Individuals</h1>
+      <a class="btn" href="records.html">← Records</a>
+    </div>
+    <p class="muted">Some sharks and rays carry markings as unique as fingerprints: the spots of zebra sharks and eagle rays, the belly patterns of mantas, the honeycomb of whiprays. Reviewers compare photos with a pattern-matching tool and check each match by eye. Each animal recognised gets a code, and every new sighting adds to its history.</p>
+    <div id="ind-list" class="ind-grid"></div>
+    <section id="ind-detail" class="card" hidden></section>
+  </main>
+
+  <script type="module" src="js/individuals.js"></script>
+</body>
+</html>

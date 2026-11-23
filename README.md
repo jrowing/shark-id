@@ -1,6 +1,8 @@
-# The Sharkive: market shark survey
+# The Sharkive: shark and ray survey
 
-A phone web app (PWA) for logging dead sharks at fish markets and roadside stalls.
+A phone web app (PWA) for logging sharks and rays: dead ones at fish markets and roadside stalls, and live ones seen in the water or the shallows.
+
+**Market visits.** At a market or roadside seller, the contributor starts a *visit* (phone clock + live GPS), logs every shark or ray they photograph, then finishes it. A visit with no sightings is a **zero record**. One tap ("Nothing here today") records a visit and finishes it straight away. Visits are what make "how often do sharks turn up for sale" answerable. Live sightings (in the water, in the shallows) have no visits: they're opportunistic photo records.
 
 1. **Photo**: taken with the in-app camera, or an original photo from the camera roll.
 2. **When and where come from the photo, never from the user.** Capture time comes from the shutter press or from the photo's EXIF data. Location comes from GPS at the shutter or from the photo's EXIF GPS. Photos without a trustworthy capture time are **refused**. Once saved, time and location can't be edited, even by reviewers (a database trigger enforces this).
@@ -38,11 +40,19 @@ js/screen.js      on-phone screening: explicit-image check (models/nsfw) + "is i
 js/store.js       data layer (Supabase or IndexedDB demo)
 js/queue.js       offline upload queue
 js/review.js      claimed review batches, expert queue, history, people, reference library
-js/records.js     public records, detail page, CSV
+js/records.js     public records, detail page, CSV, Darwin Core, market-visit effort table
+js/visits.js      market visits and zero records (start, finish, auto-close after 6 h idle)
+js/measure.js     size from a photo: reference of known length + two points on the animal
+js/photoid.js     photo-ID screen for reviewers (crop, match, link / new individual)
+js/photoid-core.js ORB features + RANSAC matching (OpenCV.js, loaded on demand, ~10 MB)
+js/dwc.js         Darwin Core Archive builder (occurrence core + meta.xml + eml.xml)
+js/individuals.js public catalogue of recognised individuals
+individuals.html  scale-card.html (printable 20 cm card, A4 landscape)
 sw.js             offline caching
 supabase/schema.sql          base schema
 supabase/add-*.sql           shark count, delete/purge, reference-only, extra species
-supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles, private bucket (run last)
+supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles, private bucket
+supabase/population-2026-11.sql  rays, market visits, sighting fields, photo-ID, research grade (run last)
 ```
 
 ## Security model
@@ -54,9 +64,23 @@ supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles, private 
 - Before upload, the phone screens each photo (`js/screen.js`): clearly explicit photos are refused, and borderline or "not a shark" photos are flagged and blurred for reviewers. Admins can block a phone, which stops its uploads and deletes its unapproved records.
 - Photos at markets often show vendors' faces. Consider a note on the log page asking users to frame just the shark, and blur faces before any public display.
 
+## Population data update (November 2026)
+
+Run `supabase/population-2026-11.sql` in the SQL Editor after `scale-2026-11.sql`, then deploy the app. It's safe to re-run.
+
+| Feature | What it does |
+|---|---|
+| **Rays** | 14 ray species plus "Ray — not identified". `species.grp` is `shark` or `ray`; `size_measure` is `TL` (total length) or `DW` (disc width). Critically endangered rays are expert-only. |
+| **Market visits** | `visits` table (market / roadside only). Contributors insert; only reviewers read raw rows. `public_visits` adds duration and the number of *approved* sightings, so a visit whose only photo was rejected counts as a zero visit. Rate limits: `max_visits_per_hour`, `max_visits_per_day` in `settings`. |
+| **Sightings** | `submissions.context` (`market`, `in_water`, `shallows`), `visit_id` (market only, enforced), `sex` (submitter) and `confirmed_sex` (reviewer), `life_stage`, `depth_m`, `habitat`, and `measurement` / `measured_length_cm` / `measured_by` from the photo measuring tool. |
+| **Size from photos** | Points are stored as fractions of the photo, so they survive resizing. Print the card from `scale-card.html` at 100% and check the bar is 20 cm. Fill in `species.maturity_cm` (size at maturity) from the literature to show "below/above maturity" on records. |
+| **Photo-ID** | `individuals` (public) and `photoid_features` (reviewers only). Reviewers crop the markings, the browser computes ORB features and compares them with every catalogued photo of that species and side (RANSAC inliers). They then link or create an individual (`ZEB-0001`, …). Only species with `photo_id_suitable` show the button. The score bands (`STRONG = 25`, `POSSIBLE = 12` inliers in `photoid-core.js`) were tuned on synthetic tests: **check them against real photos**, and always confirm a match by eye. |
+| **Research grade** | `quality_grade()`: *research* = approved, and the ID was confirmed by an expert/admin or agreed by a second reviewer, nobody has disagreed since, the species is identified, and time/place came from trusted sources. Otherwise *verified*. The **Second opinion** review tab serves records that need one. Disagreeing sends the record back to the expert queue. |
+| **Darwin Core** | Records → *Darwin Core* downloads a DwC-A zip (occurrence core) for GBIF/OBIS. Zero visits become `absent` occurrences of Elasmobranchii. Dataset title, contact and **licence** are in `DATASET` in `js/config.js`: choose the licence before publishing. |
+
 ## Next steps
 
 - **Fine-tuned model**: once there are a few hundred approved records, export images and labels and fine-tune EfficientNet/MobileNet in Python, convert it to TF.js, then change `MODEL_ID` and `embed()` in `classifier.js` (or swap kNN for the model's softmax output). Old embeddings are tagged with their model, so nothing gets mixed up.
-- **Rays**: wedgefish and guitarfish (often Critically Endangered) are often sold alongside sharks. Add them to `species`.
+- **Calibrate photo-ID** on real photos of known repeat animals (adjust `STRONG`/`POSSIBLE`), and add `maturity_cm` values per species.
 - **Seychelles Creole names**: add a `local_name` column to `species` and show it on the log page.
-- **Verify the IUCN categories and maximum lengths** in the seed data against the current Red List before launch.
+- **Verify the IUCN categories and maximum lengths** in the seed data (sharks and rays) against the current Red List before launch.

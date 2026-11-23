@@ -94,8 +94,10 @@ export function initShell(active) {
     panel.innerHTML = `<div class="queue-head"><strong>Waiting to upload (${list.length})</strong><button class="btn ghost" data-act="close">✕</button></div>` +
       (list.length ? list.map(i => `
         <div class="queue-item">
-          <div><strong>${esc(i.record.site_name || 'Unnamed site')}</strong> · <span class="small">photo taken ${esc(fmtTaken(i.record.taken_at, i.record.local_offset_min, { withZone: false }))}</span></div>
-          <div class="small muted">Saved ${esc(new Date(i.queued_at).toLocaleString())} · ${i.attempts || 0} failed attempt${i.attempts === 1 ? '' : 's'} · ${Math.round((i.blob?.size || 0) / 1024)} KB ${esc(i.blob?.type || '')}</div>
+          <div><strong>${esc(i.record.site_name || 'Unnamed site')}</strong> · <span class="small">${i.type === 'visit'
+            ? `visit (${esc(i.record.kind)}, ${i.record.sightings_logged ? `${i.record.sightings_logged} sighting${i.record.sightings_logged === 1 ? '' : 's'}` : 'nothing seen'}) started ${esc(fmtTaken(i.record.started_at, i.record.local_offset_min, { withZone: false }))}`
+            : `photo taken ${esc(fmtTaken(i.record.taken_at, i.record.local_offset_min, { withZone: false }))}`}</span></div>
+          <div class="small muted">Saved ${esc(new Date(i.queued_at).toLocaleString())} · ${i.attempts || 0} failed attempt${i.attempts === 1 ? '' : 's'}${i.blob ? ` · ${Math.round(i.blob.size / 1024)} KB ${esc(i.blob.type || '')}` : ''}</div>
           ${uploading === i.id ? '<p class="small"><span class="spinner"></span> Uploading now…</p>' : ''}
           ${i.last_error ? `<div class="errors small">Last error: ${esc(i.last_error)}</div>` : ''}
           <div class="btn-row"><button class="btn" data-act="retry">Retry now</button><button class="btn ghost" data-act="discard" data-id="${esc(i.id)}">Discard</button></div>

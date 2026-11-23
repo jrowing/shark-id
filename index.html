@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>The Sharkive — log a shark</title>
+  <title>The Sharkive — log a shark or ray</title>
   <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-title" content="Sharkive">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/favicon-a-64.png?v=1" type="image/png">
   <link rel="icon" href="icons/favicon-a-dark-64.png?v=1" type="image/png" media="(prefers-color-scheme: dark)">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/app.css?v=5">
+  <link rel="stylesheet" href="css/app.css?v=6">
 </head>
 <body>
   <header class="top">
@@ -25,21 +25,69 @@
   </header>
 
   <main class="wrap">
-    <section id="step-photo" class="card">
-      <h1>Log a shark</h1>
-      <p class="muted">Photograph the whole shark side-on if you can, with the dorsal fins and tail visible. The time and place are taken from the photo automatically, and you can't change them.</p>
+    <section id="step-visit" class="card" hidden>
+      <h1>Log sharks and rays</h1>
+      <h2>At a market or roadside seller</h2>
+      <p class="muted small">Start a visit when you arrive. Each visit is recorded, <strong>even if there are no sharks or rays</strong>. Knowing where people looked and found none is what lets the data show how often they really turn up.</p>
+      <div class="kind-grid" id="kind-grid"></div>
+      <div id="visit-form" hidden>
+        <label class="field">Place name
+          <input id="visit-site" type="text" maxlength="120" placeholder="e.g. Baie Ste Anne market, roadside Grand Anse" autocomplete="off" list="site-list">
+        </label>
+        <p class="small muted" id="visit-tip"></p>
+        <div class="btn-row">
+          <button id="btn-start-visit" class="btn primary big">Start visit</button>
+          <button id="btn-nothing" class="btn big">Nothing here today</button>
+        </div>
+        <p class="small muted">The time and place of the visit come from your phone's clock and GPS.</p>
+      </div>
+      <p class="small"><button id="btn-no-visit" class="linklike">Adding market photos from an earlier day? Log them without a visit</button></p>
+
+      <h2 class="live-head">A live shark or ray</h2>
+      <div class="kind-grid">
+        <button class="kind-btn live-btn" data-context="in_water"><span>🤿</span>In the water (diving, snorkelling)</button>
+        <button class="kind-btn live-btn" data-context="shallows"><span>🌊</span>In the shallows (beach, lagoon, mangrove)</button>
+      </div>
+    </section>
+
+    <section id="visit-bar" class="card visit-bar" hidden>
+      <div class="visit-head">
+        <span class="visit-icon" id="visit-icon"></span>
+        <div>
+          <strong id="visit-title"></strong>
+          <span class="small muted" id="visit-sub"></span>
+        </div>
+        <button id="btn-finish-visit" class="btn">Finish visit</button>
+      </div>
+      <div id="finish-form" hidden>
+        <p id="finish-summary"></p>
+        <label class="field">Notes about the visit (optional)
+          <input id="finish-notes" type="text" maxlength="1000" placeholder="e.g. market closed early, only checked one stall">
+        </label>
+        <div class="btn-row">
+          <button id="btn-save-visit" class="btn primary">Save visit</button>
+          <button id="btn-keep-visit" class="btn ghost">Keep going</button>
+          <button id="btn-discard-visit" class="btn ghost danger-text">Discard this visit</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="step-photo" class="card" hidden>
+      <h1>Log a shark or ray</h1>
+      <p class="muted">Photograph the whole animal side-on if you can (rays from above), with the fins and tail visible. The time and place are taken from the photo automatically, and you can't change them.</p>
       <div class="btn-row">
         <button id="btn-camera" class="btn primary big">Take photo</button>
         <label class="btn big">Choose an existing photo
           <input id="file-input" type="file" accept="image/jpeg,image/heic,image/heif,image/png,image/*" hidden>
         </label>
       </div>
-      <p class="small muted">Existing photos must be originals from the camera roll. Screenshots and photos forwarded by WhatsApp or Messenger have no capture data and will be refused.</p>
+      <p class="small muted">Existing photos must be originals from the camera roll. Screenshots and photos forwarded by WhatsApp or Messenger have no capture data and will be refused. Underwater camera photos usually have no GPS, so they can only be logged within 30 minutes of taking them (the phone's location is used).</p>
+      <p class="small" id="no-visit-note" hidden><span id="no-visit-text"></span> <button id="btn-back-visit" class="linklike">Change</button></p>
     </section>
 
     <a class="card about-link" href="about.html">
       <strong>About The Sharkive →</strong>
-      <span class="small muted">Why we're recording sharks at markets, and how the data could one day help understand shark populations and support conservation.</span>
+      <span class="small muted">Why we're recording sharks and rays, at markets and in the sea, and how the data could one day help understand their populations and support conservation.</span>
     </a>
 
     <div id="camera" class="camera" hidden>
@@ -79,21 +127,71 @@
 
     <section id="step-details" class="card" hidden>
       <h2>Details</h2>
-      <label class="field">Market or place name
+      <label class="field">Place name
         <input id="site-name" type="text" maxlength="120" placeholder="e.g. Baie Ste Anne market, roadside Grand Anse" autocomplete="off" list="site-list">
         <datalist id="site-list"></datalist>
       </label>
-      <label class="field">Number of sharks in the photo
+      <label class="field">Number of animals in the photo
         <input id="shark-count" type="number" min="1" max="500" value="1" inputmode="numeric">
       </label>
       <p class="small muted">If the photo shows more than one species, log each species separately (one photo per species).</p>
+
+      <div class="grid2 tight live-only" hidden>
+        <label class="field" id="depth-wrap">Depth (m)
+          <input id="depth" type="number" min="0" max="200" step="0.5" inputmode="decimal" placeholder="e.g. 12">
+        </label>
+        <label class="field">Habitat
+          <select id="habitat"><option value="">Not sure</option></select>
+        </label>
+      </div>
+
+      <fieldset class="field choice">
+        <legend>Sex</legend>
+        <div class="seg" id="sex-seg">
+          <label><input type="radio" name="sex" value="male"> Male</label>
+          <label><input type="radio" name="sex" value="female"> Female</label>
+          <label><input type="radio" name="sex" value="unknown" checked> Can't tell</label>
+        </div>
+        <details class="small guide">
+          <summary>How to tell</summary>
+          <div class="guide-body">
+            <svg viewBox="0 0 320 150" role="img" aria-label="Underside of a shark's pelvic area: the male has two rod-like claspers behind the pelvic fins, the female has none">
+              <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+                <path d="M20 75 Q80 40 150 70" /><path d="M20 75 Q80 110 150 80" />
+                <path d="M95 62 L120 30 L130 60" /><path d="M95 88 L120 120 L130 90" />
+                <path d="M128 66 L180 58" stroke-width="5" stroke-linecap="round" /><path d="M128 84 L180 92" stroke-width="5" stroke-linecap="round" />
+                <path d="M190 75 Q240 40 310 70" /><path d="M190 75 Q240 110 310 80" />
+                <path d="M255 62 L280 30 L290 60" /><path d="M255 88 L280 120 L290 90" />
+              </g>
+              <text x="70" y="145" font-size="13" fill="currentColor" text-anchor="middle">Male: two claspers</text>
+              <text x="250" y="145" font-size="13" fill="currentColor" text-anchor="middle">Female: none</text>
+            </svg>
+            <p>Look at the underside, just behind the pelvic fins (the pair of small fins near the vent). <strong>Males</strong> have two stiff, rod-like <strong>claspers</strong>. <strong>Females</strong> have none. Rays are the same: claspers sit either side of the base of the tail. Young males have short claspers that are easy to miss, so choose <em>Can't tell</em> if you're not sure.</p>
+          </div>
+        </details>
+      </fieldset>
+
+      <label class="field">Life stage
+        <select id="life-stage">
+          <option value="">Not sure</option>
+          <option value="neonate">Newborn (fresh umbilical scar on the belly)</option>
+          <option value="juvenile">Juvenile</option>
+          <option value="adult">Adult</option>
+        </select>
+      </label>
+
       <div class="grid2 tight">
-        <label class="field">Estimated length (cm)
+        <label class="field"><span id="length-label">Estimated length (cm)</span>
           <input id="length" type="number" min="1" max="2000" inputmode="numeric" placeholder="e.g. 120">
         </label>
-        <label class="field">Price (SCR, if for sale)
+        <label class="field market-only">Price (SCR, if for sale)
           <input id="price" type="number" min="0" inputmode="decimal" placeholder="e.g. 350">
         </label>
+      </div>
+      <div class="measure-box">
+        <button id="btn-measure" class="btn" type="button">Measure from the photo</button>
+        <span id="measure-result" class="small"></span>
+        <p class="small muted">Put a <a href="scale-card.html" target="_blank">Sharkive scale card</a>, a tape or a sheet of A4 flat beside the animal before you take the photo, then tap its ends and the animal's ends.</p>
       </div>
       <label class="field">Notes
         <textarea id="notes" maxlength="2000" rows="3" placeholder="How many were for sale, whole or cut up, fins removed, caught locally?"></textarea>
@@ -106,7 +204,10 @@
     <section id="done" class="card center" hidden>
       <h2>Thank you</h2>
       <p id="done-text">Your record has been saved and will be checked by a reviewer.</p>
-      <button id="btn-another" class="btn primary">Log another</button>
+      <div class="btn-row center-row">
+        <button id="btn-another" class="btn primary">Log another</button>
+        <button id="btn-done-finish" class="btn" hidden>Finish visit</button>
+      </div>
     </section>
   </main>
 

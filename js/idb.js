@@ -1,7 +1,7 @@
 // Tiny IndexedDB wrapper: offline queue, demo-mode storage and caches.
 const DB_NAME = 'shark-id';
-const VERSION = 1;
-const STORES = ['queue', 'demo_submissions', 'demo_references', 'cache'];
+const VERSION = 2;
+const STORES = ['queue', 'demo_submissions', 'demo_references', 'cache', 'demo_visits', 'demo_individuals', 'demo_features', 'demo_confirmations'];
 let dbPromise;
 
 function open() {

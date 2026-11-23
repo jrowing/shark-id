@@ -1,4 +1,4 @@
-// Seed species list for Seychelles / Western Indian Ocean landings.
+// Seed species list (sharks and rays) for Seychelles / Western Indian Ocean landings.
 // Mirrors the INSERT in supabase/schema.sql. IUCN categories and lengths are
 // approximate — check each against the current IUCN Red List before launch.
 export const SPECIES = [
@@ -64,4 +64,45 @@ export const SPECIES = [
     id_features: 'Stout dogfish; a large spine in front of each dorsal fin; no anal fin; white margins on the fins; very rough skin; broadly rounded snout. Deep water.' },
   { id: 'unidentified', common_name: 'Shark — not identified', scientific_name: 'Selachimorpha', family: '', iucn_status: 'NE', max_length_cm: null,
     id_features: 'Use when a reviewer cannot confirm the species from the photo. The record still counts towards totals.' },
+  // ---- rays (supabase/population-2026-11.sql) ----
+  { id: "bottlenose-wedgefish", common_name: "Bottlenose wedgefish", scientific_name: "Rhynchobatus australiae", family: "Rhinidae", iucn_status: "CR", max_length_cm: 300, grp: "ray", size_measure: "TL",
+    id_features: "Shark-like ray: pointed wedge-shaped snout, large shark-like dorsal fins and tail; white spots on the back and a black spot (ringed with white spots) on each pectoral fin. Very hard to separate from whitespotted and smoothnose wedgefish from photos." },
+  { id: "whitespotted-wedgefish", common_name: "Whitespotted wedgefish", scientific_name: "Rhynchobatus djiddensis", family: "Rhinidae", iucn_status: "CR", max_length_cm: 310, grp: "ray", size_measure: "TL",
+    id_features: "Shark-like ray with a wedge-shaped snout and shark-like fins; rows of white spots on the back; black pectoral spot. Western Indian Ocean form of the complex; compare bottlenose wedgefish." },
+  { id: "smoothnose-wedgefish", common_name: "Smoothnose wedgefish", scientific_name: "Rhynchobatus laevis", family: "Rhinidae", iucn_status: "CR", max_length_cm: 300, grp: "ray", size_measure: "TL",
+    id_features: "Wedgefish with a smooth snout and a dark spot on the pectoral fin; white spots on the back. Part of the R. djiddensis species complex: photos often can't separate them." },
+  { id: "bowmouth-guitarfish", common_name: "Bowmouth guitarfish (shark ray)", scientific_name: "Rhina ancylostomus", family: "Rhinidae", iucn_status: "CR", max_length_cm: 270, grp: "ray", size_measure: "TL",
+    id_features: "Broad, rounded head with ridges of thorns over the eyes and on the back; wide W-shaped mouth; big shark-like dorsal fins; white spots on a grey-brown back. Unmistakable." },
+  { id: "halavi-guitarfish", common_name: "Halavi guitarfish", scientific_name: "Glaucostegus halavi", family: "Glaucostegidae", iucn_status: "CR", max_length_cm: 180, grp: "ray", size_measure: "TL",
+    id_features: "Guitarfish: long, flattened, guitar-shaped body with a pointed translucent snout; plain sandy-brown back; dorsal fins set well back on the tail. Compare other giant guitarfishes." },
+  { id: "spotted-eagle-ray", common_name: "Ocellated (spotted) eagle ray", scientific_name: "Aetobatus ocellatus", family: "Aetobatidae", iucn_status: "VU", max_length_cm: 300, grp: "ray", size_measure: "DW",
+    id_features: "Diamond-shaped disc with pointed wings; dark back covered in white spots or rings; distinct head with a duck-bill snout; very long whip-like tail with spines at the base. Size is disc width." },
+  { id: "honeycomb-whipray", common_name: "Honeycomb (reticulate) whipray", scientific_name: "Himantura uarnak", family: "Dasyatidae", iucn_status: "EN", max_length_cm: 200, grp: "ray", size_measure: "DW",
+    id_features: "Large stingray with a rhomboid disc; dense network of dark brown reticulations (honeycomb) on a pale back; very long whip-like banded tail. Size is disc width." },
+  { id: "pink-whipray", common_name: "Pink whipray", scientific_name: "Pateobatis fai", family: "Dasyatidae", iucn_status: "VU", max_length_cm: 180, grp: "ray", size_measure: "DW",
+    id_features: "Large stingray with a plain grey-pink back and white underside; long thin tail with no fin fold. Size is disc width." },
+  { id: "blotched-fantail", common_name: "Blotched fantail ray (round ribbontail)", scientific_name: "Taeniurops meyeni", family: "Dasyatidae", iucn_status: "VU", max_length_cm: 180, grp: "ray", size_measure: "DW",
+    id_features: "Very large round disc with black blotches on grey; short thick tail with a deep fin fold below. Size is disc width." },
+  { id: "bluespotted-ribbontail", common_name: "Bluespotted ribbontail ray", scientific_name: "Taeniura lymma", family: "Dasyatidae", iucn_status: "LC", max_length_cm: 35, grp: "ray", size_measure: "DW",
+    id_features: "Small oval stingray; bright blue spots on a yellow-brown back; blue stripes along the tail. Size is disc width." },
+  { id: "mangrove-whipray", common_name: "Mangrove whipray", scientific_name: "Urogymnus granulatus", family: "Dasyatidae", iucn_status: "EN", max_length_cm: 140, grp: "ray", size_measure: "DW",
+    id_features: "Oval disc, dark brown with small white flecks; tail white towards the tip. Shallow lagoons and mangroves. Size is disc width." },
+  { id: "porcupine-ray", common_name: "Porcupine ray", scientific_name: "Urogymnus asperrimus", family: "Dasyatidae", iucn_status: "EN", max_length_cm: 115, grp: "ray", size_measure: "DW",
+    id_features: "Thick, oval disc covered in sharp thorns; plain grey-brown; thick tail with no sting. Size is disc width." },
+  { id: "reef-manta", common_name: "Reef manta ray", scientific_name: "Mobula alfredi", family: "Mobulidae", iucn_status: "VU", max_length_cm: 500, grp: "ray", size_measure: "DW",
+    id_features: "Huge diamond-shaped disc with head fins (cephalic lobes); white shoulder patches that run parallel to the head; belly spots unique to each animal. Size is disc width." },
+  { id: "oceanic-manta", common_name: "Oceanic (giant) manta ray", scientific_name: "Mobula birostris", family: "Mobulidae", iucn_status: "EN", max_length_cm: 700, grp: "ray", size_measure: "DW",
+    id_features: "Huge disc; T-shaped white shoulder patches; dark mouth; belly spots concentrated low on the belly. Size is disc width." },
+  { id: "unidentified-ray", common_name: "Ray \u2014 not identified", scientific_name: "Batoidea", family: "", iucn_status: "NE", max_length_cm: null, grp: "ray", size_measure: "TL",
+    id_features: "Use when a reviewer cannot confirm the species of a ray from the photo. The record still counts towards totals." },
 ];
+
+// Fields added by supabase/population-2026-11.sql, applied to the demo list.
+const EXPERT_ONLY = new Set(["humani-whaler", "bottlenose-wedgefish", "bowmouth-guitarfish", "halavi-guitarfish", "smoothnose-wedgefish", "whitespotted-wedgefish"]);
+const PHOTO_ID = new Set(["blotched-fantail", "bowmouth-guitarfish", "honeycomb-whipray", "oceanic-manta", "reef-manta", "spotted-eagle-ray", "tawny-nurse", "whale", "zebra"]);
+for (const s of SPECIES) {
+  s.grp ??= 'shark';
+  s.size_measure ??= 'TL';
+  s.expert_only ??= EXPERT_ONLY.has(s.id) || s.iucn_status === 'CR';
+  s.photo_id_suitable ??= PHOTO_ID.has(s.id);
+}

@@ -161,4 +161,9 @@ export const LABELS = {
   tz_source: { device: 'device time zone (assumed)', exif_offset: 'photo data', gps_utc: 'GPS clock' },
   location_source: { live_gps: 'GPS at the shutter', exif: 'Photo data (EXIF GPS)', live_gps_at_upload: 'GPS when added (photo < 30 min old)' },
   capture_method: { in_app_camera: 'In-app camera', file: 'Existing photo' },
+  context: { market: 'Landed or for sale', in_water: 'Alive, in the water', shallows: 'Alive, in the shallows' },
+  sex: { male: 'Male (claspers)', female: 'Female (no claspers)', unknown: 'Can\'t tell' },
+  life_stage: { neonate: 'Newborn (umbilical scar)', juvenile: 'Juvenile', adult: 'Adult', unknown: 'Not sure' },
+  measure: { TL: 'total length (snout to tail tip)', FL: 'fork length (snout to tail fork)', DW: 'disc width (wing tip to wing tip)' },
+  quality: { research: 'Research grade', verified: 'Verified' },
 };

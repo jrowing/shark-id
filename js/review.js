@@ -5,6 +5,7 @@ import { LABELS } from './metadata.js';
 import { embed, MODEL_ID } from './classifier.js';
 import * as store from './store.js';
 import { FLAG_LABELS } from './screen.js';
+import { openMeasure } from './measure.js';
 
 initShell('review');
 
@@ -83,14 +84,19 @@ async function refreshCounts() {
     const c = await store.queueCounts();
     $('#n-pending').textContent = c.pending || '';
     $('#n-expert').textContent = c.expert || '';
+    $('#n-second').textContent = c.second || '';
   } catch (e) { /* badges are cosmetic */ }
 }
 
-const speciesOptions = (selected = '') =>
-  '<option value="">— choose species —</option>' +
-  species.map(s => `<option value="${esc(s.id)}" ${s.id === selected ? 'selected' : ''}>${esc(s.common_name)} — ${esc(s.scientific_name)}${s.expert_only ? ' (expert)' : ''}</option>`).join('');
+const speciesOptions = (selected = '') => {
+  const opt = s => `<option value="${esc(s.id)}" ${s.id === selected ? 'selected' : ''}>${esc(s.common_name)} — ${esc(s.scientific_name)}${s.expert_only ? ' (expert)' : ''}</option>`;
+  return '<option value="">— choose species —</option>' +
+    `<optgroup label="Sharks">${species.filter(s => (s.grp || 'shark') === 'shark').map(opt).join('')}</optgroup>` +
+    `<optgroup label="Rays">${species.filter(s => s.grp === 'ray').map(opt).join('')}</optgroup>`;
+};
 
 const isQueue = tab => tab === 'pending' || tab === 'expert';
+const isSecond = tab => tab === 'second';
 let decidedOffset = 0;
 
 async function renderQueue(tab) {
@@ -99,11 +105,14 @@ async function renderQueue(tab) {
   let rows, more = false;
   try {
     if (isQueue(tab)) rows = await store.claimBatch(tab, CLAIM_BATCH);
+    else if (isSecond(tab)) rows = await store.secondOpinionBatch(CLAIM_BATCH);
     else { decidedOffset = 0; ({ rows, more } = await store.listForReview(tab)); decidedOffset = rows.length; }
   } catch (e) { box.innerHTML = `<p class="errors">${esc(e.message)}</p>`; return; }
   if (tab !== currentTab) return;
-  if (!rows.length) { box.innerHTML = `<div class="card center muted">Nothing ${isQueue(tab) ? 'waiting for review' : 'here'}.</div>`; return; }
-  box.innerHTML = (isQueue(tab)
+  if (!rows.length) { box.innerHTML = `<div class="card center muted">Nothing ${isQueue(tab) || isSecond(tab) ? 'waiting for review' : 'here'}.</div>`; return; }
+  box.innerHTML = (isSecond(tab)
+      ? '<div class="card claim-bar small"><span>Second opinions make records <strong>research grade</strong>. Identify each animal yourself: if you agree with the approved species, it becomes research grade. If you don\'t, it goes back to the expert queue.</span></div>'
+      : isQueue(tab)
       ? `<div class="card claim-bar small"><span>These ${rows.length} record${rows.length === 1 ? ' is' : 's are'} held for you for 15 minutes, so no one else reviews ${rows.length === 1 ? 'it' : 'them'}. <strong>Skip</strong> hands a record back.</span></div>`
       : tab === 'rejected'
         ? `<div class="card purge-bar"><span>Purging deletes every rejected record and its photos permanently.</span>
@@ -141,6 +150,7 @@ async function loadMoreDecided() {
   } catch (e) { toast(e.message, 'err'); btn.disabled = false; }
 }
 
+const isSecondCard = r => currentTab === 'second' && r.status === 'approved';
 function cardHtml(r) {
   const ai = r.ai_suggestions?.results || [];
   const aiTop = ai[0]?.species_id;
@@ -166,8 +176,12 @@ function cardHtml(r) {
         <div class="kv"><span>Taken</span><strong>${esc(fmtTaken(r.taken_at, r.local_offset_min))}</strong><em>${esc(LABELS.time_source[r.time_source])} · tz: ${esc(LABELS.tz_source[r.tz_source])}</em></div>
         <div class="kv"><span>Where</span><strong>${esc(fmtCoord(r.lat, r.lon))}${r.location_accuracy_m ? ` ±${Math.round(r.location_accuracy_m)} m` : ''}</strong><em>${esc(LABELS.location_source[r.location_source])}</em></div>
         <div class="kv"><span>Site</span><strong>${esc(r.site_name || '—')}</strong></div>
-        <div class="kv"><span>Sharks in photo</span><strong>${r.shark_count ?? 1}</strong></div>
-        <div class="kv"><span>Length / price</span><strong>${r.length_cm ? r.length_cm + ' cm' : '—'} / ${r.price != null ? 'SCR ' + r.price : '—'}</strong></div>
+        <div class="kv"><span>Type</span><strong>${esc(LABELS.context[r.context || 'market'])}</strong>${r.visit_id ? `<em>part of a visit</em>` : '<em>no visit</em>'}</div>
+        <div class="kv"><span>Animals in photo</span><strong>${r.shark_count ?? 1}</strong></div>
+        <div class="kv"><span>Length / price</span><strong>${r.length_cm ? r.length_cm + ' cm (estimate)' : '—'} / ${r.price != null ? 'SCR ' + r.price : '—'}</strong></div>
+        <div class="kv"><span>Measured</span><strong class="measured">${r.measured_length_cm ? `${r.measured_length_cm} cm ${esc(r.measurement?.measure || '')}` : '—'}</strong>${r.measured_length_cm ? `<em>by ${esc(r.measured_by || 'submitter')} · ${esc(r.measurement?.ref_kind || '')} reference</em>` : ''}</div>
+        <div class="kv"><span>Sex / stage</span><strong>${esc(LABELS.sex[r.sex] || '—')}${r.confirmed_sex ? ` → confirmed ${esc(r.confirmed_sex)}` : ''} / ${esc(LABELS.life_stage[r.life_stage] || '—')}</strong><em>sex as given by the submitter</em></div>
+        ${r.context && r.context !== 'market' ? `<div class="kv"><span>Depth / habitat</span><strong>${r.depth_m != null ? r.depth_m + ' m' : '—'} / ${esc(r.habitat || '—')}</strong></div>` : ''}
         ${r.notes ? `<div class="kv"><span>Notes</span><strong>${esc(r.notes)}</strong></div>` : ''}
         <div class="kv"><span>Submitted</span><strong>${esc(new Date(r.created_at).toLocaleString())}</strong><em>${esc(LABELS.capture_method[r.capture_method])}</em></div>
         ${why.length ? `<div class="warnings screen-flags">${why.map(w => `<p>⚑ ${esc(w)}</p>`).join('')}</div>` : ''}
@@ -184,10 +198,23 @@ function cardHtml(r) {
         ${r.status === 'pending' ? `
         <label class="field">Confirmed species <select class="sel-species">${speciesOptions(preselect)}</select></label>
         <div class="species-hint small muted"></div>
-        <label class="field">Number of sharks <input class="count-input" type="number" min="1" max="500" value="${r.shark_count ?? 1}"></label>
+        <label class="field">Number of animals <input class="count-input" type="number" min="1" max="500" value="${r.shark_count ?? 1}"></label>
+        <label class="field">Sex (check the claspers) <select class="sex-select">
+          <option value="">Can't confirm from the photo</option>
+          <option value="male" ${r.sex === 'male' ? 'selected' : ''}>Male: claspers visible</option>
+          <option value="female" ${r.sex === 'female' ? 'selected' : ''}>Female: no claspers</option>
+        </select></label>
         <label class="field">Review notes <input class="review-notes" type="text" maxlength="500" placeholder="Optional; required when rejecting or sending to an expert"></label>` : `
         <p class="small">Status: <strong>${esc(r.status)}</strong>${r.confirmed_species_id ? ` as <strong>${esc(speciesById[r.confirmed_species_id]?.common_name || r.confirmed_species_id)}</strong>` : ''}${r.reviewed_at ? ` on ${esc(new Date(r.reviewed_at).toLocaleDateString())}` : ''}</p>
         ${r.review_notes ? `<p class="small muted">Notes: ${esc(r.review_notes)}</p>` : ''}`}
+        ${isSecondCard(r) ? `
+        <label class="field">Your identification <select class="sel-second">${speciesOptions('')}</select></label>
+        <label class="field">Note (needed if you disagree) <input class="second-note" type="text" maxlength="500"></label>
+        <div class="btn-row"><button class="btn primary btn-second">Save my ID</button></div>` : ''}
+        <div class="btn-row">
+          <button class="btn btn-measure" type="button">${r.measured_length_cm ? 'Re-measure' : 'Measure'}</button>
+          <button class="btn btn-photoid" type="button" ${speciesById[r.confirmed_species_id || (r.ai_suggestions?.results?.[0]?.species_id) || r.submitter_species_id]?.photo_id_suitable || r.individual_id ? '' : 'hidden'}>${r.individual_id ? 'Photo-ID (linked)' : 'Photo-ID'}</button>
+        </div>
         <div class="btn-row">
           ${r.status === 'pending' ? `<button class="btn primary btn-approve">Approve</button>
           <button class="btn btn-reference" title="Train the identifier with this photo, but don't show it in Records">Reference only</button>
@@ -214,6 +241,39 @@ function failed(card, e) {
 function wireCard(r) {
   const card = $(`#c-${CSS.escape(r.id)}`);
   $('.reveal', card)?.addEventListener('click', e => { e.currentTarget.parentElement.classList.remove('blurred'); e.currentTarget.remove(); });
+  $('.btn-measure', card)?.addEventListener('click', async () => {
+    const sp = speciesById[$('.sel-species', card)?.value || r.confirmed_species_id || r.submitter_species_id];
+    const m = await openMeasure(r.photo_url, { measure: sp?.size_measure || 'TL', existing: r.measurement });
+    if (!m) return;
+    try {
+      const { warnings, ...measurement } = m;
+      await store.reviewSubmission(r, { measurement, measured_length_cm: m.value_cm, measured_by: 'reviewer' });
+      Object.assign(r, { measurement, measured_length_cm: m.value_cm, measured_by: 'reviewer' });
+      $('.measured', card).textContent = `${m.value_cm} cm ${m.measure}`;
+      toast(`Length saved: ${m.value_cm} cm`);
+    } catch (e) { toast(e.message, 'err'); }
+  });
+  $('.btn-photoid', card)?.addEventListener('click', async () => {
+    const spId = $('.sel-species', card)?.value || r.confirmed_species_id;
+    if (!spId) return toast('Choose the species first', 'err');
+    const { openPhotoId } = await import('./photoid.js');
+    const res = await openPhotoId(r, spId, speciesById[spId]?.common_name || spId);
+    if (res) { r.individual_id = res.individual_id; $('.btn-photoid', card).textContent = `Photo-ID (${res.code})`; toast(`Linked to ${res.code}`); }
+  });
+  $('.btn-second', card)?.addEventListener('click', async () => {
+    const mine = $('.sel-second', card).value, note = $('.second-note', card).value.trim();
+    if (!mine) return toast('Choose the species you see', 'err');
+    const agrees = mine === r.confirmed_species_id;
+    if (!agrees && !note) return toast('Say why you disagree in the note', 'err');
+    setBusy(card, true);
+    try {
+      await store.addConfirmation(r.id, mine, note || null);
+      if (!agrees) await store.reviewSubmission(r, { status: 'pending', needs_expert: true,
+        escalation_note: `Second opinion: ${speciesById[mine]?.common_name || mine}, not ${speciesById[r.confirmed_species_id]?.common_name || r.confirmed_species_id}. ${note}`.slice(0, 500) });
+      card.remove(); bumpCount();
+      toast(agrees ? 'Agreed: now research grade' : 'Disagreement saved and sent to the expert queue');
+    } catch (e) { failed(card, e); }
+  });
   const blk = $('.btn-block', card);
   blk?.addEventListener('click', async () => {
     if (!blk.dataset.armed) {   // first tap arms, second tap blocks
@@ -277,6 +337,8 @@ function wireCard(r) {
     const s = speciesById[sel.value];
     $('.species-hint', card).innerHTML = s ? `${iucnChip(s.iucn_status)} ${esc(s.id_features || '')}` +
       (s.expert_only && !isExpert() ? '<p class="warn-text">Only an expert can confirm this species. Use <strong>Needs expert</strong>.</p>' : '') : '';
+    const pid = $('.btn-photoid', card);
+    if (pid) pid.hidden = !(s?.photo_id_suitable || r.individual_id);
   };
   sel.addEventListener('change', hint); hint();
 
@@ -290,6 +352,7 @@ function wireCard(r) {
       await store.reviewSubmission(r, {
         status, confirmed_species_id: sel.value,
         shark_count: Math.min(500, Math.max(1, parseInt($('.count-input', card).value, 10) || 1)),
+        confirmed_sex: $('.sex-select', card).value || null,
         review_notes: $('.review-notes', card).value.trim() || null,
         embedding, embedding_model: embedding ? MODEL_ID : null,
       });

@@ -75,7 +75,8 @@ async function movePhotos(r, toPublic) {
 const REVIEW_COLS = 'id,created_at,photo_path,thumb_path,capture_method,taken_at,local_offset_min,time_source,tz_source,' +
   'lat,lon,location_accuracy_m,location_source,exif,device_info,ai_model,ai_suggestions,submitter_species_id,site_name,' +
   'length_cm,price,notes,shark_count,status,confirmed_species_id,review_notes,reviewed_by,reviewed_at,embedding_model,' +
-  'submitted_by,claimed_by,claimed_at,needs_expert,escalation_note,screening,photo_public';
+  'submitted_by,claimed_by,claimed_at,needs_expert,escalation_note,screening,photo_public,' +
+  'context,visit_id,sex,confirmed_sex,life_stage,depth_m,habitat,measurement,measured_length_cm,measured_by,individual_id';
 
 // ---------------- species ----------------
 export async function listSpecies() {
@@ -139,30 +140,50 @@ export async function submit(record, blob, thumb) {
   if (ins.error && ins.error.code !== '23505') throw ins.error; // 23505 = already inserted on an earlier attempt
 }
 
-function joinSpecies(row, map) {
+// Demo-mode stand-in for the database's quality_grade(): the demo reviewer is an admin.
+function demoGrade(r) {
+  if (r.status !== 'approved') return null;
+  if (['unidentified', 'unidentified-ray'].includes(r.confirmed_species_id)) return 'verified';
+  if (r.location_source === 'live_gps_at_upload' || (r.time_source === 'exif' && r.tz_source === 'device')) return 'verified';
+  return 'research';
+}
+function joinSpecies(row, map, individuals = {}) {
   const sp = map[row.confirmed_species_id] || {};
   return {
     ...row, species_id: row.confirmed_species_id,
     common_name: sp.common_name, scientific_name: sp.scientific_name, family: sp.family,
     iucn_status: sp.iucn_status, max_length_cm: sp.max_length_cm, id_features: sp.id_features,
+    grp: sp.grp || 'shark', size_measure: sp.size_measure || 'TL', maturity_cm: sp.maturity_cm ?? null,
+    context: row.context || 'market', sex: row.confirmed_sex ?? row.sex ?? null, sex_confirmed: row.confirmed_sex != null,
+    individual_code: individuals[row.individual_id]?.code ?? null, quality_grade: demoGrade(row),
   };
 }
+// Optional record filters: { context: 'market' | 'live', research: true }
+function applyFilters(q, f = {}) {
+  if (f.context === 'market') q = q.eq('context', 'market');
+  else if (f.context === 'live') q = q.neq('context', 'market');
+  if (f.research) q = q.eq('quality_grade', 'research');
+  return q;
+}
+const demoFilter = (f = {}) => r =>
+  (!f.context || (f.context === 'market' ? r.context === 'market' : r.context !== 'market')) && (!f.research || r.quality_grade === 'research');
 async function demoApproved(speciesId) {
   const map = await speciesMap();
+  const inds = Object.fromEntries((await idb.all('demo_individuals')).map(i => [i.id, i]));
   return (await idb.all('demo_submissions'))
     .filter(r => r.status === 'approved' && (!speciesId || r.confirmed_species_id === speciesId))
-    .map(r => ({ ...joinSpecies(r, map), photo_url: blobUrl(r.id, r.photo), thumb_url: blobUrl(r.id + '_t', r.thumb || r.photo) }))
+    .map(r => ({ ...joinSpecies(r, map, inds), photo_url: blobUrl(r.id, r.photo), thumb_url: blobUrl(r.id + '_t', r.thumb || r.photo) }))
     .sort((a, b) => b.taken_at.localeCompare(a.taken_at));
 }
 
 // One page of public records, newest first. Returns { rows, more }.
-export async function listPublicRecords({ speciesId = '', offset = 0, limit = PAGE_SIZE } = {}) {
+export async function listPublicRecords({ speciesId = '', offset = 0, limit = PAGE_SIZE, filters = {} } = {}) {
   if (isDemo) {
-    const all = await demoApproved(speciesId);
+    const all = (await demoApproved(speciesId)).filter(demoFilter(filters));
     return { rows: all.slice(offset, offset + limit), more: all.length > offset + limit };
   }
   const client = await sb();
-  let q = client.from('public_records').select('*').order('taken_at', { ascending: false }).order('id').range(offset, offset + limit);
+  let q = applyFilters(client.from('public_records').select('*').order('taken_at', { ascending: false }).order('id').range(offset, offset + limit), filters);
   if (speciesId) q = q.eq('species_id', speciesId);
   const rows = check(await q);
   const more = rows.length > limit;
@@ -170,12 +191,12 @@ export async function listPublicRecords({ speciesId = '', offset = 0, limit = PA
 }
 
 // Every public record (for CSV), fetched 1000 at a time.
-export async function allPublicRecords(speciesId = '', onProgress = () => {}) {
-  if (isDemo) return demoApproved(speciesId);
+export async function allPublicRecords(speciesId = '', onProgress = () => {}, filters = {}) {
+  if (isDemo) return (await demoApproved(speciesId)).filter(demoFilter(filters));
   const client = await sb();
   const out = [];
   for (let from = 0; ; from += 1000) {
-    let q = client.from('public_records').select('*').order('taken_at', { ascending: false }).order('id').range(from, from + 999);
+    let q = applyFilters(client.from('public_records').select('*').order('taken_at', { ascending: false }).order('id').range(from, from + 999), filters);
     if (speciesId) q = q.eq('species_id', speciesId);
     const rows = check(await q);
     out.push(...await Promise.all(rows.map(withUrls)));
@@ -188,13 +209,19 @@ export async function allPublicRecords(speciesId = '', onProgress = () => {}) {
 export async function recordsSummary() {
   if (isDemo) {
     const all = await demoApproved();
+    const visits = await demoVisits();
     const by = {};
-    for (const r of all) (by[r.species_id] ??= { species_id: r.species_id, common_name: r.common_name, n: 0 }).n++;
+    for (const r of all) (by[r.species_id] ??= { species_id: r.species_id, common_name: r.common_name, grp: r.grp, n: 0 }).n++;
+    const animals = grp => all.filter(r => r.grp === grp).reduce((s, r) => s + (r.shark_count ?? 1), 0);
     return {
-      records: all.length, sharks: all.reduce((s, r) => s + (r.shark_count ?? 1), 0), species: Object.keys(by).length,
+      records: all.length, sharks: animals('shark'), rays: animals('ray'),
+      species: Object.keys(by).filter(id => !id.startsWith('unidentified')).length,
+      research: all.filter(r => r.quality_grade === 'research').length,
+      visits: visits.length, zero_visits: visits.filter(v => !v.approved_sightings).length,
+      individuals: (await idb.all('demo_individuals')).length,
       threatened: all.filter(r => ['CR', 'EN', 'VU'].includes(r.iucn_status)).length,
       sites: new Set(all.map(r => r.site_name).filter(Boolean)).size,
-      by_species: Object.values(by).sort((a, b) => String(a.common_name).localeCompare(b.common_name)),
+      by_species: Object.values(by).sort((a, b) => String(b.grp).localeCompare(String(a.grp)) || String(a.common_name).localeCompare(b.common_name)),
     };
   }
   const client = await sb();
@@ -213,7 +240,8 @@ export async function getPublicRecord(id) {
   if (isDemo) {
     const r = await idb.get('demo_submissions', id);
     if (!r || r.status !== 'approved') return null;
-    return { ...joinSpecies(r, await speciesMap()), photo_url: blobUrl(r.id, r.photo) };
+    const inds = Object.fromEntries((await idb.all('demo_individuals')).map(i => [i.id, i]));
+    return { ...joinSpecies(r, await speciesMap(), inds), photo_url: blobUrl(r.id, r.photo) };
   }
   const client = await sb();
   const rows = check(await client.from('public_records').select('*').eq('id', id).limit(1));
@@ -244,7 +272,7 @@ export async function releaseClaim(id) {
 export async function queueCounts() {
   if (isDemo) {
     const p = (await idb.all('demo_submissions')).filter(r => r.status === 'pending');
-    return { pending: p.filter(r => !r.needs_expert).length, expert: p.filter(r => r.needs_expert).length };
+    return { pending: p.filter(r => !r.needs_expert).length, expert: p.filter(r => r.needs_expert).length, second: 0 };
   }
   const client = await sb();
   return check(await client.rpc('queue_counts')) || { pending: 0, expert: 0 };
@@ -495,4 +523,123 @@ export async function blockedList() {
 export async function unblockContributor(userId) {
   const client = await sb();
   check(await client.from('blocked_contributors').delete().eq('user_id', userId));
+}
+
+// ---------------- visits (survey effort, zero records) ----------------
+export async function submitVisit(v) {
+  if (isDemo) { await idb.put('demo_visits', { ...v, created_at: new Date().toISOString(), status: 'ok' }); return; }
+  await ensureSignedIn();
+  const client = await sb();
+  const ins = await client.from('visits').insert(v);
+  if (ins.error && ins.error.code !== '23505') throw ins.error;   // 23505 = already uploaded
+}
+async function demoVisits() {
+  const subs = (await idb.all('demo_submissions')).filter(r => r.status === 'approved' && r.visit_id);
+  return (await idb.all('demo_visits')).filter(v => v.status !== 'hidden').map(v => {
+    const mine = subs.filter(r => r.visit_id === v.id);
+    return { ...v, duration_min: Math.round((Date.parse(v.ended_at) - Date.parse(v.started_at)) / 60000),
+      approved_sightings: mine.length, animals: mine.reduce((n, r) => n + (r.shark_count ?? 1), 0) };
+  }).sort((a, b) => b.started_at.localeCompare(a.started_at));
+}
+// Every public visit (for the effort table and Darwin Core absences), 1000 at a time.
+export async function allPublicVisits(onProgress = () => {}) {
+  if (isDemo) return demoVisits();
+  const client = await sb();
+  const out = [];
+  for (let from = 0; ; from += 1000) {
+    const rows = check(await client.from('public_visits').select('*').order('started_at', { ascending: false }).order('id').range(from, from + 999));
+    out.push(...rows);
+    onProgress(out.length);
+    if (rows.length < 1000) return out;
+  }
+}
+
+// ---------------- photo-ID: individuals ----------------
+export async function listIndividuals() {
+  if (isDemo) {
+    const recs = await demoApproved();
+    return (await idb.all('demo_individuals')).map(i => {
+      const mine = recs.filter(r => r.individual_id === i.id).sort((a, b) => b.taken_at.localeCompare(a.taken_at));
+      return { ...i, common_name: mine[0]?.common_name, sightings: mine.length, first_seen: mine.at(-1)?.taken_at, last_seen: mine[0]?.taken_at,
+        thumb_url: mine[0]?.thumb_url || '' };
+    }).sort((a, b) => a.code.localeCompare(b.code));
+  }
+  const client = await sb();
+  const rows = check(await client.from('public_individuals').select('*').order('code').limit(2000));
+  return Promise.all(rows.map(withUrls));
+}
+export async function individualRecords(individualId) {
+  if (isDemo) return (await demoApproved()).filter(r => r.individual_id === individualId);
+  const client = await sb();
+  const rows = check(await client.from('public_records').select('*').eq('individual_id', individualId).order('taken_at', { ascending: false }).limit(500));
+  return Promise.all(rows.map(withUrls));
+}
+// Reviewer: features already catalogued for a species (and side). Each row comes
+// with a small photo of the catalogued animal.
+export async function photoidFeatures(speciesId, side, model) {
+  if (isDemo) {
+    const inds = Object.fromEntries((await idb.all('demo_individuals')).map(i => [i.id, i]));
+    const subs = Object.fromEntries((await idb.all('demo_submissions')).map(r => [r.id, r]));
+    return (await idb.all('demo_features')).filter(f => f.species_id === speciesId && f.side === side && f.model === model)
+      .map(f => ({ ...f, code: inds[f.individual_id]?.code, thumb_url: subs[f.submission_id] ? blobUrl(f.submission_id + '_t', subs[f.submission_id].thumb || subs[f.submission_id].photo) : '' }));
+  }
+  const client = await sb();
+  const rows = check(await client.from('photoid_features')
+    .select('id,individual_id,submission_id,species_id,side,crop,model,n_keypoints,keypoints,descriptors,individuals(code)')
+    .eq('species_id', speciesId).eq('side', side).eq('model', model).limit(5000));
+  const ids = [...new Set(rows.map(r => r.submission_id).filter(Boolean))];
+  const photos = {};
+  for (let i = 0; i < ids.length; i += 200) {
+    const subs = check(await client.from('submissions').select('id,photo_path,thumb_path,photo_public').in('id', ids.slice(i, i + 200)));
+    for (const r of await withReviewUrls(subs)) photos[r.id] = r.thumb_url;
+  }
+  return rows.map(({ individuals, ...f }) => ({ ...f, code: individuals?.code, thumb_url: photos[f.submission_id] || '' }));
+}
+export async function nextIndividualCode(speciesId) {
+  if (isDemo) {
+    const pre = speciesId.replace(/[^a-z]/g, '').slice(0, 3).toUpperCase();
+    const n = (await idb.all('demo_individuals')).filter(i => i.code.startsWith(pre + '-')).length + 1;
+    return `${pre}-${String(n).padStart(4, '0')}`;
+  }
+  const client = await sb();
+  return check(await client.rpc('next_individual_code', { p_species: speciesId }));
+}
+export async function createIndividual({ species_id, nickname = null, sex = null }) {
+  const code = await nextIndividualCode(species_id);
+  const row = { id: crypto.randomUUID(), code, species_id, nickname, sex };
+  if (isDemo) { await idb.put('demo_individuals', { ...row, created_at: new Date().toISOString() }); return row; }
+  const client = await sb();
+  check(await client.from('individuals').insert(row));
+  return row;
+}
+// Saves the features of a photo region and links the record to the individual.
+export async function catalogueSighting(r, { individual_id, species_id, side, crop, model, keypoints, descriptors }) {
+  const f = { id: crypto.randomUUID(), individual_id, submission_id: r.id, species_id, side, crop, model, n_keypoints: keypoints.length, keypoints, descriptors };
+  if (isDemo) {
+    await idb.put('demo_features', f);
+    const cur = await idb.get('demo_submissions', r.id);
+    await idb.put('demo_submissions', { ...cur, individual_id });
+    return;
+  }
+  const client = await sb();
+  check(await client.from('photoid_features').insert(f));
+  check(await client.from('submissions').update({ individual_id }).eq('id', r.id));
+}
+
+// ---------------- second opinions (research grade) ----------------
+export async function secondOpinionBatch(n = 5) {
+  if (isDemo) return [];
+  const client = await sb();
+  const rows = check(await client.rpc('second_opinion_batch', { p_n: n }));
+  return withReviewUrls(rows.map(({ embedding_v, embedding, ...r }) => r));
+}
+export async function addConfirmation(submissionId, speciesId, note = null) {
+  if (isDemo) { await idb.put('demo_confirmations', { id: submissionId, species_id: speciesId, note, at: new Date().toISOString() }); return; }
+  const client = await sb();
+  check(await client.from('id_confirmations').upsert({ submission_id: submissionId, species_id: speciesId, agrees: true, note }, { onConflict: 'submission_id,reviewer' }));
+}
+export async function confirmationsFor(submissionId) {
+  if (isDemo) return [];
+  const client = await sb();
+  return check(await client.from('id_confirmations').select('reviewer,species_id,agrees,note,at').eq('submission_id', submissionId).order('at'));
 }
