@@ -4,8 +4,8 @@
 // every reviewer-confirmed photo (k-nearest neighbours, cosine similarity).
 // The library grows with each approval, so the suggestions improve over time.
 // Swap in a fine-tuned model later by changing MODEL_ID + embed().
-import { AI } from './config.js?v=12';
-import { loadScript } from './util.js?v=12';
+import { AI } from './config.js?v=13';
+import { loadScript } from './util.js?v=13';
 
 export const MODEL_ID = 'mobilenet_v2_1.0_flipavg_v1';
 const TFJS = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';

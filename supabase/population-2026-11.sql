@@ -3,8 +3,8 @@
 -- Run once in Supabase → SQL Editor, AFTER scale-2026-11.sql. Safe to re-run.
 --
 --   1. Rays            ray species, shark/ray group, size measure (TL / DW)
---   2. Visits          effort records at markets and roadside sellers.
---                      A visit with no sightings is a zero record.
+--   2. Nothing-here    zero records: a market or roadside seller checked and
+--                      no sharks or rays found (one moment; table `visits`).
 --   3. Sightings       context (market / in water / shallows), market-visit link, sex,
 --                      life stage, depth, habitat, measured length
 --   4. Photo-ID        individuals catalogue + ORB features (reviewers only)
@@ -59,9 +59,10 @@ update public.species set photo_id_suitable = true
  where id in ('zebra','tawny-nurse','whale','spotted-eagle-ray','honeycomb-whipray','blotched-fantail','reef-manta','oceanic-manta','bowmouth-guitarfish');
 
 -- ===========================================================================
--- 2. Market visits (survey effort, including zero records)
---    Only markets and roadside sellers: in-water and shallows sightings are
---    opportunistic photo records with no effort attached.
+-- 2. "Nothing here" checks (zero records) at markets and roadside sellers.
+--    The app records one moment (started_at = ended_at). The table can also
+--    hold timed visits, and submissions.visit_id can link sightings to one,
+--    but the app doesn't use that at the moment.
 -- ===========================================================================
 insert into public.settings (key, value, note) values
   ('max_visits_per_hour', 20, 'visits per contributor (device)'),

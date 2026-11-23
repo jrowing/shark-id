@@ -1,9 +1,9 @@
 // Public records: list, map, per-record detail, CSV export.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=12';
-import { $, esc } from './util.js?v=12';
-import { LABELS } from './metadata.js?v=12';
-import * as store from './store.js?v=12';
-import { DATASET } from './config.js?v=12';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=13';
+import { $, esc } from './util.js?v=13';
+import { LABELS } from './metadata.js?v=13';
+import * as store from './store.js?v=13';
+import { DATASET } from './config.js?v=13';
 
 const chips = r => `<span class="chips">${r.quality_grade ? `<span class="chip chip-${esc(r.quality_grade)}" title="${r.quality_grade === 'research' ? 'Identification confirmed by an expert or a second reviewer' : 'Identification confirmed by one reviewer'}">${esc(LABELS.quality[r.quality_grade])}</span>` : ''}${r.grp === 'ray' ? '<span class="chip chip-ray">Ray</span>' : ''}${r.context && r.context !== 'market' ? '<span class="chip chip-live">Live</span>' : ''}${r.individual_code ? `<span class="chip">${esc(r.individual_code)}</span>` : ''}</span>`;
 
@@ -86,8 +86,7 @@ async function showList() {
     <div class="stat"><b>${summary.species}</b><span>species</span></div>
     <div class="stat"><b>${pct(summary.threatened, summary.records)}</b><span>threatened (CR/EN/VU)</span></div>
     <div class="stat"><b>${pct(summary.research ?? 0, summary.records)}</b><span>research grade</span></div>
-    <div class="stat"><b>${summary.visits ?? 0}</b><span>market visits</span></div>
-    <div class="stat"><b>${pct((summary.visits ?? 0) - (summary.zero_visits ?? 0), summary.visits)}</b><span>visits with sharks or rays</span></div>`;
+    <div class="stat"><b>${summary.zero_visits ?? 0}</b><span>"nothing for sale" checks</span></div>`;
   renderEffort();
   $('#btn-more').addEventListener('click', () => loadPage(false));
   renderMap();
@@ -167,36 +166,43 @@ $('#btn-dwc').addEventListener('click', async () => {
   try {
     const recs = await store.allPublicRecords('', n => { btn.textContent = `Darwin Core (${n}…)`; });
     const visits = await store.allPublicVisits();
-    const { downloadDwcA } = await import('./dwc.js?v=12');
+    const { downloadDwcA } = await import('./dwc.js?v=13');
     const n = await downloadDwcA(recs, visits, DATASET);
     toast(`Darwin Core Archive: ${n.occurrences} records and ${n.absences} absences`);
   } catch (e) { toast(e.message, 'err'); }
   finally { btn.disabled = false; btn.textContent = 'Darwin Core'; }
 });
 
-// ---------- market visits (effort) ----------
+// ---------- market checks (effort) ----------
+// Per site: days with confirmed sharks or rays for sale, and "nothing here" checks.
 let visitRows = [];
+const siteKey = n => (n || '').trim().toLowerCase() || '(unnamed site)';
+const localDay = (iso, off) => new Date(Date.parse(iso) + (off ?? 0) * 60000).toISOString().slice(0, 10);
 async function renderEffort() {
   const box = $('#effort-table');
-  try { visitRows = await store.allPublicVisits(); }
-  catch (e) { box.innerHTML = `<p class="small muted">${esc(e.message)}</p>`; return; }
-  if (!visitRows.length) { box.innerHTML = '<p class="muted small">No market visits recorded yet.</p>'; return; }
+  let market;
+  try {
+    [visitRows, market] = await Promise.all([store.allPublicVisits(), store.allPublicRecords('', () => {}, { context: 'market' })]);
+  } catch (e) { box.innerHTML = `<p class="small muted">${esc(e.message)}</p>`; return; }
+  const zero = visitRows.filter(v => !v.approved_sightings);
+  if (!zero.length && !market.length) { box.innerHTML = '<p class="muted small">No market records yet.</p>'; return; }
   const by = {};
-  for (const v of visitRows) {
-    const key = v.site_name || 'Unnamed site';
-    const g = (by[key] ??= { site: key, visits: 0, with: 0, animals: 0, minutes: 0, last: '' });
-    g.visits++; g.with += v.approved_sightings > 0 ? 1 : 0; g.animals += v.animals || 0;
-    g.minutes += v.duration_min || 0; if (v.started_at > g.last) g.last = v.started_at;
+  const g = (name) => (by[siteKey(name)] ??= { site: (name || '').trim() || 'Unnamed site', days: new Set(), nothing: 0, animals: 0, last: '' });
+  for (const r of market) {
+    const x = g(r.site_name); x.days.add(localDay(r.taken_at, r.local_offset_min)); x.animals += r.shark_count ?? 1;
+    if (r.taken_at > x.last) x.last = r.taken_at;
   }
-  const groups = Object.values(by).sort((a, b) => b.visits - a.visits);
-  const tot = groups.reduce((t, g) => ({ visits: t.visits + g.visits, with: t.with + g.with, animals: t.animals + g.animals }), { visits: 0, with: 0, animals: 0 });
-  const row = (g, strong) => `<tr${strong ? ' class="total"' : ''}><td>${esc(g.site)}</td><td>${g.last ? esc(new Date(g.last).toLocaleDateString()) : ''}</td><td>${g.visits}</td><td>${g.with}</td><td>${g.visits ? Math.round(100 * g.with / g.visits) : 0}%</td><td>${g.animals}</td></tr>`;
-  box.innerHTML = `<table class="table effort-table"><thead><tr><th>Site</th><th>Last visit</th><th>Visits</th><th>With sharks/rays</th><th>%</th><th>Animals</th></tr></thead><tbody>${
-    groups.slice(0, 50).map(g => row(g)).join('')}${row({ site: 'All sites', ...tot }, true)}</tbody></table>
-    <p class="small muted">Only sightings a reviewer has approved count. Sites are grouped by the name contributors typed, so spelling variants show separately.</p>`;
+  for (const v of zero) { const x = g(v.site_name); x.nothing++; if (v.started_at > x.last) x.last = v.started_at; }
+  const groups = Object.values(by).map(x => ({ ...x, with: x.days.size })).sort((a, b) => (b.with + b.nothing) - (a.with + a.nothing));
+  const tot = groups.reduce((t, x) => ({ with: t.with + x.with, nothing: t.nothing + x.nothing, animals: t.animals + x.animals }), { with: 0, nothing: 0, animals: 0 });
+  const row = (x, strong) => `<tr${strong ? ' class="total"' : ''}><td>${esc(x.site)}</td><td>${x.last ? esc(new Date(x.last).toLocaleDateString()) : ''}</td><td>${x.with}</td><td>${x.nothing}</td><td>${x.with + x.nothing ? Math.round(100 * x.with / (x.with + x.nothing)) : 0}%</td><td>${x.animals}</td></tr>`;
+  box.innerHTML = `<table class="table effort-table"><thead><tr><th>Site</th><th>Last record</th><th>Days with sharks/rays</th><th>"Nothing here"</th><th>% with</th><th>Animals</th></tr></thead><tbody>${
+    groups.slice(0, 50).map(x => row(x)).join('')}${row({ site: 'All sites', ...tot }, true)}</tbody></table>
+    <p class="small muted">Only records a reviewer has approved count. A day with several records at one site counts once. Sites are grouped by the name contributors typed, so spelling variants show separately. Coverage is uneven (people log where and when they happen to be), so treat the percentages as a rough guide.</p>`;
 }
 $('#btn-visits-csv').addEventListener('click', () => {
-  if (!visitRows.length) return toast('No visits yet', 'warn');
-  downloadCsv(['id', 'kind', 'started_at', 'ended_at', 'local_offset_min', 'duration_min', 'lat', 'lon', 'location_accuracy_m', 'site_name',
-    'sightings_logged', 'approved_sightings', 'animals', 'auto_closed'], visitRows, `sharkive-visits-${new Date().toISOString().slice(0, 10)}.csv`);
+  const rows = visitRows.filter(v => !v.approved_sightings);
+  if (!rows.length) return toast('No "nothing here" checks yet', 'warn');
+  downloadCsv(['id', 'kind', 'started_at', 'local_offset_min', 'lat', 'lon', 'location_accuracy_m', 'site_name'],
+    rows, `sharkive-nothing-here-${new Date().toISOString().slice(0, 10)}.csv`);
 });

@@ -1,16 +1,16 @@
 // "Log a shark" page.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=12';
-import { $, $$, esc, loadImage } from './util.js?v=12';
-import { Camera } from './camera.js?v=12';
-import { readFileMetadata, currentPosition, checkTime, LABELS } from './metadata.js?v=12';
-import * as visits from './visits.js?v=12';
-import { openMeasure } from './measure.js?v=12';
-import { embed, aggregate, rankCentroids, MODEL_ID } from './classifier.js?v=12';
-import { AI } from './config.js?v=12';
-import { listSpecies, matchSpecies, speciesCentroids, isDemo } from './store.js?v=12';
-import { prepareUpload } from './image.js?v=12';
-import { screenPhoto, NOT_SCREENED } from './screen.js?v=12';
-import { enqueue } from './queue.js?v=12';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=13';
+import { $, $$, esc, loadImage } from './util.js?v=13';
+import { Camera } from './camera.js?v=13';
+import { readFileMetadata, currentPosition, checkTime, LABELS } from './metadata.js?v=13';
+import * as visits from './visits.js?v=13';
+import { openMeasure } from './measure.js?v=13';
+import { embed, aggregate, rankCentroids, MODEL_ID } from './classifier.js?v=13';
+import { AI } from './config.js?v=13';
+import { listSpecies, matchSpecies, speciesCentroids, isDemo } from './store.js?v=13';
+import { prepareUpload } from './image.js?v=13';
+import { screenPhoto, NOT_SCREENED } from './screen.js?v=13';
+import { enqueue } from './queue.js?v=13';
 
 initShell('log');
 const submitLabel = $('#btn-submit').textContent;
@@ -19,8 +19,7 @@ let species = [];
 let speciesById = {};
 let state = null; // { blob, url, meta, ai, measurement }
 let camera = null;
-let noVisitContext = null;   // 'market' (old photos, no visit), 'in_water' or 'shallows' (live animals, never a visit)
-let pendingKind = null;      // kind chosen on the visit card, before starting
+let context = null;   // what is being logged: 'market', 'in_water' or 'shallows'
 
 (async () => {
   species = await listSpecies();
@@ -33,113 +32,47 @@ let pendingKind = null;      // kind chosen on the visit card, before starting
   $('#site-list').innerHTML = sites.map(s => `<option value="${esc(s)}">`).join('');
 })();
 
-// ---------- visits ----------
-const habitatOptions = '<option value="">Not sure</option>' + Object.entries(visits.HABITATS).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
-$('#habitat').innerHTML = habitatOptions;
-$('#kind-grid').innerHTML = Object.entries(visits.KINDS).map(([k, v]) =>
-  `<button class="kind-btn" data-kind="${k}"><span>${v.icon}</span>${esc(v.label)}</button>`).join('');
-const TIPS = {
-  market: 'Start the visit when you arrive and finish it when you leave. Log every shark or ray you see on the way.',
-  roadside: 'One visit per seller or stop. If there are no sharks or rays today, tap "Nothing here today".',
+// ---------- what are you logging? ----------
+const HABITATS = {
+  reef: 'Coral reef', sand: 'Sand', seagrass: 'Seagrass', mangrove: 'Mangrove', lagoon: 'Lagoon',
+  beach: 'Beach / surf zone', open_water: 'Open water', other: 'Other',
 };
-$$('#kind-grid .kind-btn').forEach(b => b.addEventListener('click', () => {
-  pendingKind = b.dataset.kind;
-  $$('#kind-grid .kind-btn').forEach(x => x.classList.toggle('chosen', x === b));
-  $('#visit-form').hidden = false;
-  $('#visit-tip').textContent = TIPS[pendingKind];
-  $('#visit-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}));
-function visitFields() {
-  const site_name = $('#visit-site').value.trim() || null;
-  if (site_name) rememberSite(site_name);
-  return { kind: pendingKind, site_name };
-}
-async function busy(btn, label, fn) {
-  const text = btn.textContent;
-  btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> ${esc(label)}`;
-  try { return await fn(); } finally { btn.disabled = false; btn.textContent = text; }
-}
-$('#btn-start-visit').addEventListener('click', () => busy($('#btn-start-visit'), 'Getting GPS…', async () => {
-  try {
-    const v = await visits.startVisit(visitFields());
-    noVisitContext = null;
-    toast(`Visit started at ${v.site_name || 'this spot'}`);
-  } catch (e) { toast(e.message, 'err'); }
-}));
-$('#btn-nothing').addEventListener('click', () => busy($('#btn-nothing'), 'Getting GPS…', async () => {
-  try {
-    const v = await visits.nothingSeen(visitFields());
-    toast(`Saved: no sharks or rays at ${v.site_name || 'this spot'} today. Thank you, zero records count too!`);
-    $('#visit-site').value = '';
-  } catch (e) { toast(e.message, 'err'); }
-}));
-$('#btn-no-visit').addEventListener('click', () => { noVisitContext = 'market'; renderMode(); });
-$$('.live-btn').forEach(b => b.addEventListener('click', () => { noVisitContext = b.dataset.context; renderMode(); }));
-$('#btn-back-visit').addEventListener('click', () => { noVisitContext = null; renderMode(); });
+$('#habitat').innerHTML = '<option value="">Not sure</option>' + Object.entries(HABITATS).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+$$('.ctx-btn').forEach(b => b.addEventListener('click', () => { context = b.dataset.context; renderMode(); }));
+$('#btn-back-visit').addEventListener('click', () => { context = null; renderMode(); });
 
-function openFinish() {
-  const v = visits.current();
-  if (!v) return;
-  $('#finish-form').hidden = false;
-  $('#btn-finish-visit').hidden = true;
-  $('#finish-summary').innerHTML = v.sightings_logged
-    ? `${v.sightings_logged} sighting${v.sightings_logged === 1 ? '' : 's'} logged over ${visits.durationMin(v)} min.`
-    : `<strong>Nothing logged.</strong> This visit will be saved as a zero record (you checked for ${visits.durationMin(v)} min and saw no sharks or rays). That's useful data!`;
-}
-$('#btn-finish-visit').addEventListener('click', openFinish);
-$('#btn-done-finish').addEventListener('click', () => { reset(); openFinish(); });
-$('#btn-keep-visit').addEventListener('click', () => { $('#finish-form').hidden = true; $('#btn-finish-visit').hidden = false; });
-$('#btn-save-visit').addEventListener('click', () => busy($('#btn-save-visit'), 'Saving…', async () => {
+// "Nothing for sale here": a zero record, saved in one tap.
+$('#btn-show-nothing').addEventListener('click', () => {
+  $('#nothing-form').hidden = !$('#nothing-form').hidden;
+  $('#btn-show-nothing').classList.toggle('chosen', !$('#nothing-form').hidden);
+  if (!$('#nothing-form').hidden) $('#nothing-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+$('#btn-nothing').addEventListener('click', async () => {
+  const btn = $('#btn-nothing'), label = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Getting GPS…';
   try {
-    const r = await visits.finishVisit({ notes: $('#finish-notes').value.trim() });
-    $('#finish-notes').value = '';
-    toast(r.sightings_logged ? 'Visit saved' : 'Visit saved as a zero record. Thank you!');
-  } catch (e) { toast('Could not save the visit: ' + e.message, 'err'); }
-}));
-$('#btn-discard-visit').addEventListener('click', e => {
-  const b = e.currentTarget;
-  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to discard (sightings already logged are kept)'; return; }
-  delete b.dataset.armed; b.textContent = 'Discard this visit';
-  visits.cancelVisit();
+    const site_name = $('#nothing-site').value.trim() || null;
+    if (site_name) rememberSite(site_name);
+    const kind = document.querySelector('input[name="nothing-kind"]:checked')?.value || 'market';
+    await visits.nothingHere({ kind, site_name, notes: $('#nothing-notes').value.trim() || null });
+    toast(`Saved: no sharks or rays at ${site_name || 'this spot'}. Thank you, zero records count too!`);
+    $('#nothing-site').value = ''; $('#nothing-notes').value = '';
+    $('#nothing-form').hidden = true; $('#btn-show-nothing').classList.remove('chosen');
+  } catch (e) { toast(e.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = label; }
 });
 
 function renderMode() {
-  const v = visits.current();
   const inFlow = !!state || !$('#done').hidden;
-  $('#visit-bar').hidden = !v;
-  $('#step-visit').hidden = !!v || !!noVisitContext || inFlow;
-  $('#step-photo').hidden = (!v && !noVisitContext) || inFlow;
-  $('#no-visit-note').hidden = !!v || !noVisitContext;
-  $('#no-visit-text').textContent = { market: 'Logging market photos without a visit.', in_water: 'Logging a live shark or ray in the water.', shallows: 'Logging a live shark or ray in the shallows.' }[noVisitContext] || '';
-  $('#step-photo h1').textContent = noVisitContext && noVisitContext !== 'market' ? 'Log a live shark or ray' : 'Log a shark or ray';
-  $('#btn-done-finish').hidden = !v;
+  $('#step-visit').hidden = !!context || inFlow;
+  $('#step-photo').hidden = !context || inFlow;
+  $('#no-visit-note').hidden = !context;
+  $('#no-visit-text').textContent = { market: 'Logging a shark or ray landed or for sale.', in_water: 'Logging a live shark or ray in the water.', shallows: 'Logging a live shark or ray in the shallows.' }[context] || '';
+  $('#step-photo h1').textContent = context && context !== 'market' ? 'Log a live shark or ray' : 'Log a shark or ray';
   document.querySelector('.about-link').hidden = inFlow;
-  if (v) {
-    const k = visits.KINDS[v.kind];
-    $('#visit-icon').textContent = k.icon;
-    $('#visit-title').textContent = `${k.label}${v.site_name ? ' · ' + v.site_name : ''}`;
-    $('#visit-sub').textContent = ` Started ${new Date(v.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ` +
-      (v.sightings_logged ? `${v.sightings_logged} logged` : 'nothing logged yet');
-    if ($('#finish-form').hidden) $('#btn-finish-visit').hidden = false;
-    $$('#kind-grid .kind-btn').forEach(x => x.classList.remove('chosen'));
-    $('#visit-form').hidden = true;
-  } else {
-    $('#finish-form').hidden = true;
-  }
 }
-window.addEventListener('visit-changed', renderMode);
 renderMode();
-setInterval(renderMode, 60000);
 
-// Which context a photo belongs to. Market photos join the visit their time
-// falls in; live animals never belong to a visit.
-function contextFor(takenAt) {
-  const open = visits.current();
-  if (!open && noVisitContext && noVisitContext !== 'market') return { visit: null, context: noVisitContext };
-  const v = takenAt ? visits.visitForPhoto(takenAt) : null;
-  if (v) return { visit: v, context: 'market' };
-  return { visit: null, context: 'market', outside: !!open };
-}
 let lastContext = null;
 function applyContext(ctx) {
   const live = ctx !== 'market';
@@ -151,8 +84,6 @@ function applyContext(ctx) {
   $('#notes').placeholder = live
     ? 'Behaviour, how close, swimming or resting, any tags or injuries?'
     : 'How many were for sale, whole or cut up, fins removed, caught locally?';
-  const v = visits.current();
-  if (v && !live && !$('#site-name').value) $('#site-name').value = v.site_name || '';
   $('#site-name').placeholder = live ? 'e.g. Anse Lazio reef, Curieuse mangroves' : 'e.g. Baie Ste Anne market, roadside Grand Anse';
 }
 function sizeMeasure() { return speciesById[$('#species-select').value]?.size_measure || 'TL'; }
@@ -238,10 +169,8 @@ $('#file-input').addEventListener('change', async (ev) => {
 async function startReview(blob, meta) {
   if (state?.url) URL.revokeObjectURL(state.url);
   state = { blob, url: URL.createObjectURL(blob), meta, ai: null, measurement: null };
-  const c = contextFor(meta.taken_at);
-  state.context = c.context; state.visit = c.visit;
-  if (c.outside && meta.taken_at) meta.warnings.push('This photo was taken outside your current visit, so it won\'t count towards it.');
-  applyContext(c.context);
+  state.context = context || 'market';
+  applyContext(state.context);
   renderMeasure();
   $('#step-photo').hidden = true;
   $('#step-visit').hidden = true;
@@ -266,7 +195,7 @@ function renderMeta() {
   html += row('Where', m.lat != null ? esc(fmtCoord(m.lat, m.lon)) + (m.location_accuracy_m ? ` <span class="muted">±${m.location_accuracy_m} m</span>` : '') : '<span class="bad">missing</span>',
     m.location_source ? LABELS.location_source[m.location_source] : '');
   html += row('How', LABELS.capture_method[m.capture_method]);
-  if (state.context) html += row('Type', esc(LABELS.context[state.context]), state.visit ? `part of your ${esc(visits.KINDS[state.visit.kind].label.toLowerCase())} visit` : state.context === 'market' ? 'no visit' : '');
+  if (state.context) html += row('Type', esc(LABELS.context[state.context]));
   if (m.errors.length) html += `<div class="errors">${m.errors.map(e => `<p>${esc(e)}</p>`).join('')}</div>`;
   if (m.warnings.length) html += `<div class="warnings">${m.warnings.map(e => `<p>${esc(e)}</p>`).join('')}</div>`;
   $('#meta-box').innerHTML = html;
@@ -398,7 +327,7 @@ $('#btn-submit').addEventListener('click', async () => {
   if (m.errors.length || !m.taken_at || m.lat == null) { renderMeta(); updateSubmit(); return; }
   const num = v => (v === '' || v == null ? null : Number(v));
   const site = $('#site-name').value.trim();
-  const c = contextFor(m.taken_at);
+  const c = { context: state.context };
   const live = c.context !== 'market';
   const sex = document.querySelector('input[name="sex"]:checked')?.value || 'unknown';
   const record = {
@@ -415,7 +344,7 @@ $('#btn-submit').addEventListener('click', async () => {
     site_name: site || null,
     length_cm: num($('#length').value), price: live ? null : num($('#price').value),
     notes: $('#notes').value.trim() || null,
-    context: c.context, visit_id: c.visit?.id ?? null,
+    context: c.context,
     sex, life_stage: $('#life-stage').value || null,
     depth_m: c.context === 'in_water' ? num($('#depth').value) : null,
     habitat: live ? ($('#habitat').value || null) : null,
@@ -429,7 +358,6 @@ $('#btn-submit').addEventListener('click', async () => {
   try {
     const { full, thumb } = await prepareUpload(record, state.blob);
     await enqueue(record, full, thumb);
-    if (record.visit_id) visits.noteSighting(record.visit_id);
     for (const id of ['#step-review', '#step-id', '#step-details']) $(id).hidden = true;
     if (state?.url) URL.revokeObjectURL(state.url);
     state = null;

@@ -1,7 +1,7 @@
 // Photo preparation: every upload is resized on the phone before it leaves.
 // Full image: longest side 1600 px, JPEG ~0.2–0.6 MB, with the capture time and
 // GPS written back into its EXIF. Thumbnail: 400 px for lists and the map.
-import { embedExif } from './metadata.js?v=12';
+import { embedExif } from './metadata.js?v=13';
 
 export const FULL = { maxDim: 1600, quality: 0.82 };
 export const THUMB = { maxDim: 400, quality: 0.7 };

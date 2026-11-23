@@ -7,7 +7,7 @@
 // This is only fair when the reference is flat, right next to the animal and the
 // same distance from the camera, with the camera looking straight down or
 // straight at the side. The tool says so, and records what was used.
-import { esc } from './util.js?v=12';
+import { esc } from './util.js?v=13';
 
 export const REFERENCES = {
   card:  { label: 'Sharkive scale card (20 cm bar)', cm: 20 },

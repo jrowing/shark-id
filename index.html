@@ -28,47 +28,33 @@
     <section id="step-visit" class="card" hidden>
       <h1>Log sharks and rays</h1>
       <h2>At a market or roadside seller</h2>
-      <p class="muted small">Start a visit when you arrive. Each visit is recorded, <strong>even if there are no sharks or rays</strong>. Knowing where people looked and found none is what lets the data show how often they really turn up.</p>
-      <div class="kind-grid" id="kind-grid"></div>
-      <div id="visit-form" hidden>
-        <label class="field">Place name
-          <input id="visit-site" type="text" maxlength="120" placeholder="e.g. Baie Ste Anne market, roadside Grand Anse" autocomplete="off" list="site-list">
-        </label>
-        <p class="small muted" id="visit-tip"></p>
-        <div class="btn-row">
-          <button id="btn-start-visit" class="btn primary big">Start visit</button>
-          <button id="btn-nothing" class="btn big">Nothing here today</button>
-        </div>
-        <p class="small muted">The time and place of the visit come from your phone's clock and GPS.</p>
+      <div class="kind-grid">
+        <button class="kind-btn ctx-btn" data-context="market"><span>📷</span>Log a shark or ray for sale</button>
+        <button class="kind-btn" id="btn-show-nothing"><span>🚫</span>Nothing for sale here</button>
       </div>
-      <p class="small"><button id="btn-no-visit" class="linklike">Adding market photos from an earlier day? Log them without a visit</button></p>
+      <div id="nothing-form" hidden>
+        <p class="small muted">Checked a market or roadside seller and found no sharks or rays? Record it. Knowing where people looked and found none is what lets the data show how often sharks and rays really turn up for sale.</p>
+        <fieldset class="field choice">
+          <legend>Where?</legend>
+          <div class="seg">
+            <label><input type="radio" name="nothing-kind" value="market" checked> Market or fish stall</label>
+            <label><input type="radio" name="nothing-kind" value="roadside"> Roadside seller</label>
+          </div>
+        </fieldset>
+        <label class="field">Place name
+          <input id="nothing-site" type="text" maxlength="120" placeholder="e.g. Baie Ste Anne market, roadside Grand Anse" autocomplete="off" list="site-list">
+        </label>
+        <label class="field">Notes (optional)
+          <input id="nothing-notes" type="text" maxlength="1000" placeholder="e.g. only one stall open">
+        </label>
+        <button id="btn-nothing" class="btn primary big">Save: nothing here</button>
+        <p class="small muted">The time and place come from your phone's clock and GPS.</p>
+      </div>
 
       <h2 class="live-head">A live shark or ray</h2>
       <div class="kind-grid">
-        <button class="kind-btn live-btn" data-context="in_water"><span>🤿</span>In the water (diving, snorkelling)</button>
-        <button class="kind-btn live-btn" data-context="shallows"><span>🌊</span>In the shallows (beach, lagoon, mangrove)</button>
-      </div>
-    </section>
-
-    <section id="visit-bar" class="card visit-bar" hidden>
-      <div class="visit-head">
-        <span class="visit-icon" id="visit-icon"></span>
-        <div>
-          <strong id="visit-title"></strong>
-          <span class="small muted" id="visit-sub"></span>
-        </div>
-        <button id="btn-finish-visit" class="btn">Finish visit</button>
-      </div>
-      <div id="finish-form" hidden>
-        <p id="finish-summary"></p>
-        <label class="field">Notes about the visit (optional)
-          <input id="finish-notes" type="text" maxlength="1000" placeholder="e.g. market closed early, only checked one stall">
-        </label>
-        <div class="btn-row">
-          <button id="btn-save-visit" class="btn primary">Save visit</button>
-          <button id="btn-keep-visit" class="btn ghost">Keep going</button>
-          <button id="btn-discard-visit" class="btn ghost danger-text">Discard this visit</button>
-        </div>
+        <button class="kind-btn ctx-btn" data-context="in_water"><span>🤿</span>In the water (diving, snorkelling)</button>
+        <button class="kind-btn ctx-btn" data-context="shallows"><span>🌊</span>In the shallows (beach, lagoon, mangrove)</button>
       </div>
     </section>
 
@@ -206,11 +192,10 @@
       <p id="done-text">Your record has been saved and will be checked by a reviewer.</p>
       <div class="btn-row center-row">
         <button id="btn-another" class="btn primary">Log another</button>
-        <button id="btn-done-finish" class="btn" hidden>Finish visit</button>
       </div>
     </section>
   </main>
 
-  <script type="module" src="js/capture.js?v=12"></script>
+  <script type="module" src="js/capture.js?v=13"></script>
 </body>
 </html>

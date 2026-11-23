@@ -1,8 +1,8 @@
 // Darwin Core Archive export for GBIF / OBIS.
 // One occurrence per approved record (present), plus one "absent" occurrence of
-// sharks and rays (Elasmobranchii) for each market visit where nothing was approved.
+// sharks and rays (Elasmobranchii) for each "nothing here" market check.
 // The pure functions are unit-tested; downloadDwcA() packs them into a zip.
-import { loadScript } from './util.js?v=12';
+import { loadScript } from './util.js?v=13';
 
 export const TERMS = [
   'occurrenceID', 'basisOfRecord', 'occurrenceStatus', 'eventID', 'eventDate', 'samplingProtocol', 'samplingEffort',
@@ -35,7 +35,7 @@ const PROTOCOL = {
   in_water: 'Opportunistic photo of a live animal in the water; species confirmed from the photo by a reviewer',
   shallows: 'Opportunistic photo of a live animal in the shallows; species confirmed from the photo by a reviewer',
 };
-const VISIT_PROTOCOL = 'Market visit: an observer checked the market or roadside seller for sharks and rays and photographed each one';
+const VISIT_PROTOCOL = 'Market check: an observer checked a market or roadside seller for sharks and rays for sale';
 
 export function occurrenceFromRecord(r, ds) {
   const scientificName = r.scientific_name?.replace(/\s+cf\.\s+/, ' ') || '';
@@ -89,13 +89,15 @@ export function absenceFromVisit(v, ds) {
     basisOfRecord: 'HumanObservation',
     occurrenceStatus: 'absent',
     eventID: `urn:uuid:${v.id}`,
-    eventDate: `${isoLocal(v.started_at, v.local_offset_min)}/${isoLocal(v.ended_at, v.local_offset_min)}`,
+    eventDate: v.ended_at && v.ended_at !== v.started_at
+      ? `${isoLocal(v.started_at, v.local_offset_min)}/${isoLocal(v.ended_at, v.local_offset_min)}`
+      : isoLocal(v.started_at, v.local_offset_min),
     samplingProtocol: VISIT_PROTOCOL,
-    samplingEffort: `${v.duration_min ?? Math.round((Date.parse(v.ended_at) - Date.parse(v.started_at)) / 60000)} minutes`,
+    samplingEffort: v.duration_min ? `${v.duration_min} minutes` : 'one check',
     decimalLatitude: v.lat?.toFixed(5) ?? '', decimalLongitude: v.lon?.toFixed(5) ?? '',
     geodeticDatum: 'EPSG:4326',
     coordinateUncertaintyInMeters: v.location_accuracy_m ? Math.max(1, Math.round(v.location_accuracy_m)) : '',
-    georeferenceRemarks: 'Phone GPS at the start of the visit',
+    georeferenceRemarks: 'Phone GPS at the time of the check',
     countryCode: inSeychelles(v.lat, v.lon) ? 'SC' : '',
     locality: v.site_name || '',
     minimumDepthInMeters: '', maximumDepthInMeters: '', habitat: '',
@@ -104,7 +106,7 @@ export function absenceFromVisit(v, ds) {
     individualCount: 0, sex: '', lifeStage: '', vitality: '', organismID: '',
     identificationVerificationStatus: '', identifiedBy: '', dateIdentified: '', identificationRemarks: '',
     associatedMedia: '',
-    occurrenceRemarks: `No sharks or rays found at this ${v.kind === 'roadside' ? 'roadside seller' : 'market'}${v.auto_closed ? ' (visit end time estimated)' : ''}`,
+    occurrenceRemarks: `No sharks or rays for sale at this ${v.kind === 'roadside' ? 'roadside seller' : 'market'}`,
     dynamicProperties: JSON.stringify({ visitKind: v.kind }),
     recordedBy: 'The Sharkive contributor (anonymous)',
     license: ds.license, rightsHolder: ds.publisher, datasetName: ds.title,
@@ -147,7 +149,7 @@ export function emlXml(ds, { records, absences, from, to }) {
     <creator><organizationName>${x(ds.publisher)}</organizationName>${ds.contact?.name ? `<individualName><surName>${x(ds.contact.name)}</surName></individualName>` : ''}${ds.contact?.email ? `<electronicMailAddress>${x(ds.contact.email)}</electronicMailAddress>` : ''}<onlineUrl>${x(ds.homepage)}</onlineUrl></creator>
     <pubDate>${today}</pubDate>
     <language>en</language>
-    <abstract><para>Citizen-science photo records of sharks and rays in Seychelles: animals landed or for sale at markets and roadside sellers, and live animals seen in the water and the shallows. Every record has a photo with its capture time and GPS position taken from the photo or the phone, and its species was confirmed from the photo by a reviewer. Market visits where no sharks or rays were found are included as absence records of Elasmobranchii. This export holds ${records} occurrence records and ${absences} absence records${from ? `, ${x(from)} to ${x(to)}` : ''}.</para></abstract>
+    <abstract><para>Citizen-science photo records of sharks and rays in Seychelles: animals landed or for sale at markets and roadside sellers, and live animals seen in the water and the shallows. Every record has a photo with its capture time and GPS position taken from the photo or the phone, and its species was confirmed from the photo by a reviewer. Checks of markets and roadside sellers where no sharks or rays were for sale are included as absence records of Elasmobranchii. This export holds ${records} occurrence records and ${absences} absence records${from ? `, ${x(from)} to ${x(to)}` : ''}.</para></abstract>
     <intellectualRights><para>This work is licensed under a <ulink url="${x(ds.license)}"><citetitle>${x(ds.licenseName)}</citetitle></ulink>.</para></intellectualRights>
     <coverage>
       <geographicCoverage><geographicDescription>Seychelles</geographicDescription>
@@ -156,7 +158,7 @@ export function emlXml(ds, { records, absences, from, to }) {
       <taxonomicCoverage><generalTaxonomicCoverage>Sharks and rays</generalTaxonomicCoverage><taxonomicClassification><taxonRankName>subclass</taxonRankName><taxonRankValue>Elasmobranchii</taxonRankValue></taxonomicClassification></taxonomicCoverage>
     </coverage>
     <contact><organizationName>${x(ds.publisher)}</organizationName>${ds.contact?.email ? `<electronicMailAddress>${x(ds.contact.email)}</electronicMailAddress>` : ''}</contact>
-    <methods><methodStep><description><para>Contributors photograph each animal with the app. Time and position come from the photo's EXIF data or the phone's GPS at the shutter and cannot be edited. Species are suggested by on-device image matching and confirmed by a human reviewer; research-grade records were also confirmed by an expert or a second reviewer. At markets, contributors record visits from start to finish, so visits with no sharks or rays are recorded too.</para></description></methodStep></methods>
+    <methods><methodStep><description><para>Contributors photograph each animal with the app. Time and position come from the photo's EXIF data or the phone's GPS at the shutter and cannot be edited. Species are suggested by on-device image matching and confirmed by a human reviewer; research-grade records were also confirmed by an expert or a second reviewer. At markets and roadside sellers, contributors also record checks where no sharks or rays were for sale.</para></description></methodStep></methods>
   </dataset>
 </eml:eml>
 `;

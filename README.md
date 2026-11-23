@@ -2,7 +2,7 @@
 
 A phone web app (PWA) for logging sharks and rays: dead ones at fish markets and roadside stalls, and live ones seen in the water or the shallows.
 
-**Market visits.** At a market or roadside seller, the contributor starts a *visit* (phone clock + live GPS), logs every shark or ray they photograph, then finishes it. A visit with no sightings is a **zero record**. One tap ("Nothing here today") records a visit and finishes it straight away. Visits are what make "how often do sharks turn up for sale" answerable. Live sightings (in the water, in the shallows) have no visits: they're opportunistic photo records.
+**Zero records.** Each shark or ray is logged as a photo record: landed or for sale, alive in the water, or alive in the shallows. When someone checks a market or roadside seller and finds none, one tap ("Nothing for sale here") records that moment (phone clock + live GPS) as a **zero record**. Comparing days with sightings with "nothing here" checks is what makes "how often do sharks turn up for sale" answerable.
 
 1. **Photo**: taken with the in-app camera, or an original photo from the camera roll.
 2. **When and where come from the photo, never from the user.** Capture time comes from the shutter press or from the photo's EXIF data. Location comes from GPS at the shutter or from the photo's EXIF GPS. Photos without a trustworthy capture time are **refused**. Once saved, time and location can't be edited, even by reviewers (a database trigger enforces this).
@@ -40,8 +40,8 @@ js/screen.js      on-phone screening: explicit-image check (models/nsfw) + "is i
 js/store.js       data layer (Supabase or IndexedDB demo)
 js/queue.js       offline upload queue
 js/review.js      claimed review batches, expert queue, history, people, reference library
-js/records.js     public records, detail page, CSV, Darwin Core, market-visit effort table
-js/visits.js      market visits and zero records (start, finish, auto-close after 6 h idle)
+js/records.js     public records, detail page, CSV, Darwin Core, market-check table
+js/visits.js      "nothing for sale here" zero records (one moment, stored in `visits`)
 js/measure.js     size from a photo: reference of known length + two points on the animal
 js/photoid.js     photo-ID screen for reviewers (crop, match, link / new individual)
 js/photoid-core.js ORB features + RANSAC matching (OpenCV.js, loaded on demand, ~10 MB)
@@ -52,7 +52,7 @@ sw.js             offline caching
 supabase/schema.sql          base schema
 supabase/add-*.sql           shark count, delete/purge, reference-only, extra species
 supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles, private bucket
-supabase/population-2026-11.sql  rays, market visits, sighting fields, photo-ID, research grade (run last)
+supabase/population-2026-11.sql  rays, zero records, sighting fields, photo-ID, research grade (run last)
 ```
 
 ## Security model
@@ -71,17 +71,17 @@ Run `supabase/population-2026-11.sql` in the SQL Editor after `scale-2026-11.sql
 | Feature | What it does |
 |---|---|
 | **Rays** | 14 ray species plus "Ray — not identified". `species.grp` is `shark` or `ray`; `size_measure` is `TL` (total length) or `DW` (disc width). Critically endangered rays are expert-only. |
-| **Market visits** | `visits` table (market / roadside only). Contributors insert; only reviewers read raw rows. `public_visits` adds duration and the number of *approved* sightings, so a visit whose only photo was rejected counts as a zero visit. Rate limits: `max_visits_per_hour`, `max_visits_per_day` in `settings`. |
-| **Sightings** | `submissions.context` (`market`, `in_water`, `shallows`), `visit_id` (market only, enforced), `sex` (submitter) and `confirmed_sex` (reviewer), `life_stage`, `depth_m`, `habitat`, and `measurement` / `measured_length_cm` / `measured_by` from the photo measuring tool. |
+| **Zero records** | "Nothing for sale here" checks go in the `visits` table (market / roadside only, `started_at` = `ended_at`). Contributors insert; only reviewers read raw rows; `public_visits` is the public view. The Records page puts each site's days with approved sightings beside its "nothing here" checks. Rate limits: `max_visits_per_hour`, `max_visits_per_day` in `settings`. (The table and `submissions.visit_id` could also hold timed visits, but the app doesn't use them.) |
+| **Sightings** | `submissions.context` (`market`, `in_water`, `shallows`), `visit_id` (unused for now; market only, enforced), `sex` (submitter) and `confirmed_sex` (reviewer), `life_stage`, `depth_m`, `habitat`, and `measurement` / `measured_length_cm` / `measured_by` from the photo measuring tool. |
 | **Size from photos** | Points are stored as fractions of the photo, so they survive resizing. Print the card from `scale-card.html` at 100% and check the bar is 20 cm. Fill in `species.maturity_cm` (size at maturity) from the literature to show "below/above maturity" on records. |
 | **Photo-ID** | `individuals` (public) and `photoid_features` (reviewers only). Reviewers crop the markings, the browser computes ORB features and compares them with every catalogued photo of that species and side (RANSAC inliers). They then link or create an individual (`ZEB-0001`, …). Only species with `photo_id_suitable` show the button. The score bands (`STRONG = 25`, `POSSIBLE = 12` inliers in `photoid-core.js`) were tuned on synthetic tests: **check them against real photos**, and always confirm a match by eye. |
 | **Research grade** | `quality_grade()`: *research* = approved, and the ID was confirmed by an expert/admin or agreed by a second reviewer, nobody has disagreed since, the species is identified, and time/place came from trusted sources. Otherwise *verified*. The **Second opinion** review tab serves records that need one. Disagreeing sends the record back to the expert queue. |
-| **Darwin Core** | Records → *Darwin Core* downloads a DwC-A zip (occurrence core) for GBIF/OBIS. Zero visits become `absent` occurrences of Elasmobranchii. Dataset title, contact and **licence** are in `DATASET` in `js/config.js`: choose the licence before publishing. |
+| **Darwin Core** | Records → *Darwin Core* downloads a DwC-A zip (occurrence core) for GBIF/OBIS. "Nothing here" checks become `absent` occurrences of Elasmobranchii. Dataset title, contact and **licence** are in `DATASET` in `js/config.js`: choose the licence before publishing. |
 
 ## Deploying an update
 
-Every module import carries a version query (`?v=12`), and so do the `<script>` tags and the service worker's file list. **Bump it on every deploy** that changes JavaScript, for example with
-`grep -rl '?v=12' js *.html sw.js | xargs sed -i '' 's/?v=12/?v=13/g'` (macOS sed) and `shark-id-v12` → `shark-id-v13` in `sw.js`.
+Every module import carries a version query (`?v=13`), and so do the `<script>` tags and the service worker's file list. **Bump it on every deploy** that changes JavaScript, for example with
+`grep -rl '?v=13' js *.html sw.js | xargs sed -i '' 's/?v=13/?v=14/g'` (macOS sed) and `shark-id-v13` → `shark-id-v14` in `sw.js`.
 GitHub Pages caches files for about 10 minutes. Without new URLs, phones can get a mix of new and old modules after a deploy, and the page fails to start.
 
 ## Next steps
