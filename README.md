@@ -8,8 +8,33 @@ A phone web app (PWA) for logging dead sharks at fish markets and roadside stall
 4. **Human review**: every submission waits in a queue until a reviewer approves it (with the confirmed species) or rejects it. Each approved photo is added to the reference library, so suggestions get better over time.
 5. **Records**: approved records (paged, 48 at a time) show the species (scientific name, family, IUCN status, ID features), when (local time with UTC offset, plus where that came from), where (coordinates, accuracy, site name, map), and length/price/notes. A CSV export is included.
 
+## Setting up or upgrading a live project
 
-**Setting up or upgrading a live project:** run `supabase/schema.sql`, then follow [SCALING.md](SCALING.md) (anonymous sign-ins, Turnstile, `supabase/scale-2026-11.sql`).
+Do these in order. Full details are in [SCALING.md](SCALING.md).
+
+1. **Supabase → Authentication → Sign In / Providers:** turn on **Allow anonymous sign-ins**. Each phone signs in invisibly before its first upload. Without this, the app says *"Uploads are switched off on the server"*.
+2. **Supabase → SQL Editor:** paste in and run the *contents* of each file below, in this order. A bare filename gives a syntax error. Every file is safe to re-run.
+   1. `supabase/schema.sql`
+   2. `supabase/add-count.sql`, `add-delete.sql`, `add-reference.sql`, `add-species-2026-11.sql`
+   3. `supabase/scale-2026-11.sql`. This creates the private `shark-pending` bucket that new uploads go to.
+3. **Push the repo** and wait about 10 minutes for GitHub Pages to update.
+4. **CAPTCHA (optional, recommended):**
+   1. Cloudflare → **Turnstile → Add widget**. Add the hostnames `jrowing.com`, `www.jrowing.com` and `localhost`, and choose *Managed* mode.
+   2. Put the **site key** in `js/config.js` → `TURNSTILE_SITE_KEY`, then push and wait for the site to update. The site key is public.
+   3. Only then: Supabase → Authentication → Attack Protection → **Enable CAPTCHA protection**, with provider Turnstile, and paste the **secret key** there. Never put the secret key in the repo.
+
+   If you turn on CAPTCHA protection before the live app has the site key, every upload and reviewer sign-in fails.
+
+### Upload errors
+
+The status pill shows the last error. Fix the cause, then tap **Retry now**. Queued records stay on the phone until they upload.
+
+| Error | Cause | Fix |
+|---|---|---|
+| `Uploads are switched off on the server (anonymous sign-ins disabled)` | Anonymous sign-ins are off | Step 1 |
+| `Bucket not found · code NoSuchBucket` | `scale-2026-11.sql` hasn't been run | Step 2.3 |
+| `Could not find the '…' column … · code PGRST204` | One of the `add-*.sql` files hasn't been run | Step 2.2, then run `notify pgrst, 'reload schema';` |
+| CAPTCHA or `captcha verification process failed` | Supabase CAPTCHA is on, but the site key is missing or wrong, or the hostname isn't on the widget | Step 4 |
 
 ## How the capture-data rules work
 
@@ -44,7 +69,8 @@ js/review.js      claimed review batches, expert queue, history, people, referen
 js/records.js     public records, detail page, CSV
 sw.js             offline caching
 supabase/schema.sql          base schema
-supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles (run after schema.sql)
+supabase/add-*.sql           shark count, delete/purge, reference-only, extra species
+supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles, private bucket (run last)
 ```
 
 ## Security model
