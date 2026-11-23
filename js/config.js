@@ -11,7 +11,7 @@ export const PENDING_BUCKET = 'shark-pending';  // private: everything not yet a
 // Cloudflare Turnstile site key (public). Contributors pass a one-off "are you a
 // person" check before their phone's first upload. Leave blank to skip the check
 // (only if Bot Protection is also off in Supabase → Authentication → Attack Protection).
-export const TURNSTILE_SITE_KEY = '';
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAGO85qwJyJOpA0N1';
 
 // Rules for the capture data. Submissions that break a rule are blocked.
 export const RULES = {
