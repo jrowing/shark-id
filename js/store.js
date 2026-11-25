@@ -1,9 +1,9 @@
 // Data layer. Same interface for Supabase (live) and IndexedDB (demo mode).
-import { SUPABASE_URL, SUPABASE_ANON_KEY, PHOTO_BUCKET, PENDING_BUCKET } from './config.js?v=15';
-import { SPECIES } from './species-data.js?v=15';
-import { captchaToken } from './captcha.js?v=15';
-import { prepareUpload, resizePhoto } from './image.js?v=15';
-import * as idb from './idb.js?v=15';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, PHOTO_BUCKET, PENDING_BUCKET } from './config.js?v=16';
+import { SPECIES } from './species-data.js?v=16';
+import { captchaToken } from './captcha.js?v=16';
+import { prepareUpload, resizePhoto } from './image.js?v=16';
+import * as idb from './idb.js?v=16';
 
 export const isDemo = !SUPABASE_URL;
 export const PAGE_SIZE = 48;
@@ -463,7 +463,7 @@ export async function signOut() {
 }
 // This account's reviewer row ({ role, active, requested_at, … }) or null.
 export async function myReviewer() {
-  if (isDemo) return { role: 'admin', active: true, name: 'Demo' };
+  if (isDemo) return { role: 'admin', active: true, owner: true, name: 'Demo' };
   const client = await sb();
   const session = await getSession();
   if (!session) return null;
@@ -483,6 +483,29 @@ export async function reviewerStats() {
   if (isDemo) return [];
   const client = await sb();
   return check(await client.rpc('reviewer_stats'));
+}
+// Owner: account management through the manage-users Edge Function (it holds
+// the secret key). action: 'create' | 'reset_password' | 'delete_account'.
+export async function manageUsers(action, body = {}) {
+  const client = await sb();
+  const { data, error } = await client.functions.invoke('manage-users', { body: { action, ...body } });
+  if (error) {
+    let msg = error.message;
+    try { msg = (await error.context.json()).error || msg; } catch { /* not JSON */ }
+    if (error.context?.status === 404) msg = 'The manage-users function isn\'t deployed yet (Supabase → Edge Functions).';
+    throw new Error(msg);
+  }
+  return data;
+}
+// First sign-in with a temporary password: choose a new one.
+export async function setOwnPassword(password) {
+  const client = await sb();
+  check(await client.auth.updateUser({ password, data: { must_change_password: false } }));
+}
+// Owner: add someone who already has an account, by email, straight in with a role.
+export async function addReviewer(email, role, name) {
+  const client = await sb();
+  return check(await client.rpc('add_reviewer', { p_email: email, p_role: role, p_name: name || null }));
 }
 export async function updateReviewer(user_id, patch) {
   const client = await sb();

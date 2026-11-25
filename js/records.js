@@ -1,9 +1,9 @@
 // Public records: list, map, per-record detail, CSV export.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=15';
-import { $, esc } from './util.js?v=15';
-import { LABELS } from './metadata.js?v=15';
-import * as store from './store.js?v=15';
-import { DATASET } from './config.js?v=15';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=16';
+import { $, esc } from './util.js?v=16';
+import { LABELS } from './metadata.js?v=16';
+import * as store from './store.js?v=16';
+import { DATASET } from './config.js?v=16';
 
 const chips = r => `<span class="chips">${r.quality_grade ? `<span class="chip chip-${esc(r.quality_grade)}" title="${r.quality_grade === 'research' ? 'Identification confirmed by an expert or a second reviewer' : 'Identification confirmed by one reviewer'}">${esc(LABELS.quality[r.quality_grade])}</span>` : ''}${r.grp === 'ray' ? '<span class="chip chip-ray">Ray</span>' : ''}${r.context && r.context !== 'market' ? '<span class="chip chip-live">Live</span>' : ''}${r.individual_code ? `<span class="chip">${esc(r.individual_code)}</span>` : ''}</span>`;
 
@@ -182,7 +182,7 @@ $('#btn-dwc').addEventListener('click', async () => {
   try {
     const recs = await store.allPublicRecords('', n => { btn.textContent = `Darwin Core (${n}…)`; });
     const visits = await store.allPublicVisits();
-    const { downloadDwcA } = await import('./dwc.js?v=15');
+    const { downloadDwcA } = await import('./dwc.js?v=16');
     const n = await downloadDwcA(recs, visits, DATASET);
     toast(`Darwin Core Archive: ${n.occurrences} records and ${n.absences} absences`);
   } catch (e) { toast(e.message, 'err'); }

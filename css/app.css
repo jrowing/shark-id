@@ -299,3 +299,11 @@ body.no-scroll { overflow: hidden; }
 .dot-rec { background: #0e7c74; } .dot-zero { background: #8a939b; }
 #nothing-map { height: 160px; margin-top: .35rem; }
 #nothing-where { color: var(--ink); font-weight: 400; margin-top: .3rem; }
+
+/* review → People: owner's "Add a reviewer" form */
+.add-reviewer { border-top: 1px solid var(--line, #e5e7eb); margin: 1rem 0; padding-top: .75rem; }
+.add-reviewer h3 { margin: 0 0 .25rem; font-size: 1rem; }
+.add-reviewer .btn-row { align-items: flex-end; }
+.add-reviewer .field { margin: 0; flex: 1 1 10rem; }
+.temp-pass { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: .75rem 1rem; margin: 1rem 0; }
+.temp-pass code { font-size: 1.05rem; padding: .1rem .35rem; background: #fff; border: 1px solid var(--line); border-radius: 6px; user-select: all; }

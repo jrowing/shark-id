@@ -1,9 +1,9 @@
 // Photo-ID screen (reviewers): crop the flank (or back/belly) of an animal with
 // individual markings, compare it with every catalogued photo of that species
 // and side, then link the record to a known individual or start a new one.
-import { loadScript, esc, loadImage } from './util.js?v=15';
-import * as core from './photoid-core.js?v=15';
-import * as store from './store.js?v=15';
+import { loadScript, esc, loadImage } from './util.js?v=16';
+import * as core from './photoid-core.js?v=16';
+import * as store from './store.js?v=16';
 
 const CV_URL = 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.js';
 let cvPromise;
