@@ -1,11 +1,11 @@
 // Reviewer page: approve / correct / reject submissions, manage reference library.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast, ago } from './app.js?v=15';
-import { $, $$, esc, loadImage } from './util.js?v=15';
-import { LABELS } from './metadata.js?v=15';
-import { embed, MODEL_ID } from './classifier.js?v=15';
-import * as store from './store.js?v=15';
-import { FLAG_LABELS } from './screen.js?v=15';
-import { openMeasure } from './measure.js?v=15';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast, ago } from './app.js?v=16';
+import { $, $$, esc, loadImage } from './util.js?v=16';
+import { LABELS } from './metadata.js?v=16';
+import { embed, MODEL_ID } from './classifier.js?v=16';
+import * as store from './store.js?v=16';
+import { FLAG_LABELS } from './screen.js?v=16';
+import { openMeasure } from './measure.js?v=16';
 
 initShell('review');
 
@@ -30,9 +30,10 @@ async function boot() {
     return;
   }
   $('#panel').hidden = false;
-  $('#who').textContent = `${session.user.email} · ${me.role}`;
+  $('#who').textContent = `${session.user.email} · ${me.owner ? 'owner' : me.role}`;
   $('[data-tab="expert"]').hidden = !isExpert();
-  $('[data-tab="people"]').hidden = me.role !== 'admin';
+  $('[data-tab="people"]').hidden = me.role !== 'admin' && !me.owner;
+  $('#people-owner').hidden = !me.owner;
   $('#ref-species').innerHTML = speciesOptions();
   store.reviewerNames().then(n => (names = n)).catch(() => {});
   showTab('pending');
@@ -256,7 +257,7 @@ function wireCard(r) {
   $('.btn-photoid', card)?.addEventListener('click', async () => {
     const spId = $('.sel-species', card)?.value || r.confirmed_species_id;
     if (!spId) return toast('Choose the species first', 'err');
-    const { openPhotoId } = await import('./photoid.js?v=15');
+    const { openPhotoId } = await import('./photoid.js?v=16');
     const res = await openPhotoId(r, spId, speciesById[spId]?.common_name || spId);
     if (res) { r.individual_id = res.individual_id; $('.btn-photoid', card).textContent = `Photo-ID (${res.code})`; toast(`Linked to ${res.code}`); }
   });
@@ -483,8 +484,22 @@ async function renderBlocked() {
   }));
 }
 
+$('#add-reviewer-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('button', e.target); btn.disabled = true;
+  try {
+    const r = await store.addReviewer($('#ar-email').value.trim(), $('#ar-role').value, $('#ar-name').value.trim());
+    toast(r?.updated ? 'Reviewer updated and active' : 'Reviewer added');
+    e.target.reset();
+    names = await store.reviewerNames().catch(() => names);
+  } catch (err) { toast(err.message, 'err'); }
+  btn.disabled = false;
+  renderPeople();
+});
+
 async function renderPeople() {
   renderBlocked();
+  if (!me?.owner) return;
   const box = $('#people-table');
   box.innerHTML = '<p class="muted"><span class="spinner"></span> Loading…</p>';
   let rows;
@@ -493,12 +508,12 @@ async function renderPeople() {
   box.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Person</th><th>Status</th><th>Role</th><th>Decisions (30 days / all)</th><th>Last decision</th><th></th></tr></thead><tbody>${
     rows.map(p => `<tr data-id="${esc(p.user_id)}">
       <td><strong>${esc(p.name || '—')}</strong><br><span class="small muted">${esc(p.email || '')}</span>${p.request_note ? `<br><span class="small">“${esc(p.request_note)}”</span>` : ''}</td>
-      <td>${p.active ? 'Active' : p.requested_at ? `<span class="warn-text">Requested ${esc(when(p.requested_at))}</span>` : 'Inactive'}</td>
-      <td><select class="sel-role">${['reviewer', 'expert', 'admin'].map(r => `<option ${r === p.role ? 'selected' : ''}>${r}</option>`).join('')}</select></td>
+      <td>${p.owner ? 'Owner' : p.active ? 'Active' : p.requested_at ? `<span class="warn-text">Requested ${esc(when(p.requested_at))}</span>` : 'Inactive'}</td>
+      <td>${p.owner ? 'admin' : `<select class="sel-role">${['reviewer', 'expert', 'admin'].map(r => `<option ${r === p.role ? 'selected' : ''}>${r}</option>`).join('')}</select>`}</td>
       <td>${p.decisions_30d} / ${p.decisions_total}</td>
       <td>${esc(when(p.last_decision))}</td>
-      <td class="btn-row">${p.active ? '<button class="btn ghost btn-deactivate">Deactivate</button>' : '<button class="btn primary btn-activate">Approve</button>'}
-        <button class="btn ghost btn-remove">Remove</button></td>
+      <td class="btn-row">${p.owner ? '<span class="small muted">You</span>' : `${p.active ? '<button class="btn ghost btn-deactivate">Deactivate</button>' : '<button class="btn primary btn-activate">Approve</button>'}
+        <button class="btn ghost btn-remove">Remove</button>`}</td>
     </tr>`).join('')}</tbody></table>` : '<p class="muted">No reviewers yet.</p>';
   $$('tr[data-id]', box).forEach(tr => {
     const id = tr.dataset.id;
@@ -511,7 +526,7 @@ async function renderPeople() {
     $('.btn-activate', tr)?.addEventListener('click', () => save({ active: true }, 'Reviewer approved'));
     $('.btn-deactivate', tr)?.addEventListener('click', () => save({ active: false }, 'Reviewer deactivated'));
     const rm = $('.btn-remove', tr);
-    rm.addEventListener('click', async () => {
+    rm?.addEventListener('click', async () => {
       if (!rm.dataset.armed) { rm.dataset.armed = '1'; rm.textContent = 'Tap again to remove'; rm.classList.replace('ghost', 'danger'); return; }
       try { await store.removeReviewer(id); toast('Removed'); } catch (e) { toast(e.message, 'err'); }
       renderPeople();

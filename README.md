@@ -53,6 +53,7 @@ supabase/schema.sql          base schema
 supabase/add-*.sql           shark count, delete/purge, reference-only, extra species
 supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles, private bucket
 supabase/population-2026-11.sql  rays, zero records, sighting fields, photo-ID, research grade (run last)
+supabase/owner-2026-11.sql   owner (super-user): only you manage reviewers (run after population)
 ```
 
 ## Security model

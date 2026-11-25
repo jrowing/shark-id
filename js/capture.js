@@ -1,16 +1,16 @@
 // "Log a shark" page.
-import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=15';
-import { $, $$, esc, loadImage } from './util.js?v=15';
-import { Camera } from './camera.js?v=15';
-import { readFileMetadata, currentPosition, checkTime, LABELS } from './metadata.js?v=15';
-import * as visits from './visits.js?v=15';
-import { openMeasure } from './measure.js?v=15';
-import { embed, aggregate, rankCentroids, MODEL_ID } from './classifier.js?v=15';
-import { AI } from './config.js?v=15';
-import { listSpecies, matchSpecies, speciesCentroids, isDemo } from './store.js?v=15';
-import { prepareUpload } from './image.js?v=15';
-import { screenPhoto, NOT_SCREENED } from './screen.js?v=15';
-import { enqueue } from './queue.js?v=15';
+import { initShell, fmtTaken, fmtCoord, showMap, iucnChip, toast } from './app.js?v=16';
+import { $, $$, esc, loadImage } from './util.js?v=16';
+import { Camera } from './camera.js?v=16';
+import { readFileMetadata, currentPosition, checkTime, LABELS } from './metadata.js?v=16';
+import * as visits from './visits.js?v=16';
+import { openMeasure } from './measure.js?v=16';
+import { embed, aggregate, rankCentroids, MODEL_ID } from './classifier.js?v=16';
+import { AI } from './config.js?v=16';
+import { listSpecies, matchSpecies, speciesCentroids, isDemo } from './store.js?v=16';
+import { prepareUpload } from './image.js?v=16';
+import { screenPhoto, NOT_SCREENED } from './screen.js?v=16';
+import { enqueue } from './queue.js?v=16';
 
 initShell('log');
 const submitLabel = $('#btn-submit').textContent;

@@ -78,9 +78,19 @@
       <div id="tab-queue"></div>
 
       <div id="tab-people" hidden>
-        <div class="card">
+        <div class="card" id="people-owner" hidden>
           <h2>Reviewers</h2>
-          <p class="muted small"><strong>Reviewer</strong>: approves most species. <strong>Expert</strong>: also approves expert-only species (critically endangered and provisional IDs) and works the "Needs expert" queue. <strong>Admin</strong>: everything, plus this page.</p>
+          <p class="muted small"><strong>Reviewer</strong>: approves most species. <strong>Expert</strong>: also approves expert-only species (critically endangered and provisional IDs) and works the "Needs expert" queue. <strong>Admin</strong>: everything else, including blocking phones. Only you (the owner) can add, remove or change reviewers.</p>
+          <form id="add-reviewer-form" class="add-reviewer">
+            <h3>Add a reviewer</h3>
+            <p class="muted small">They need an account first: ask them to use <em>Create an account</em> on this page. Then add their email here and they're in straight away, with no request.</p>
+            <div class="btn-row">
+              <label class="field">Email <input id="ar-email" type="email" required autocomplete="off"></label>
+              <label class="field">Name (optional) <input id="ar-name" type="text" maxlength="80"></label>
+              <label class="field">Role <select id="ar-role"><option>reviewer</option><option>expert</option><option>admin</option></select></label>
+              <button class="btn primary">Add</button>
+            </div>
+          </form>
           <div id="people-table"></div>
         </div>
         <div class="card">
@@ -121,6 +131,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/review.js?v=15"></script>
+  <script type="module" src="js/review.js?v=16"></script>
 </body>
 </html>

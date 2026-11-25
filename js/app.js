@@ -1,7 +1,7 @@
 // Shared page shell: nav, connection/queue status, service worker, formatting, maps.
-import { isDemo } from './store.js?v=15';
-import { count as queueCount, flush, items as queueItems, discard as queueDiscard } from './queue.js?v=15';
-import { $, esc, loadScript, loadCss } from './util.js?v=15';
+import { isDemo } from './store.js?v=16';
+import { count as queueCount, flush, items as queueItems, discard as queueDiscard } from './queue.js?v=16';
+import { $, esc, loadScript, loadCss } from './util.js?v=16';
 
 export const IUCN = {
   CR: ['Critically Endangered', 'cr'], EN: ['Endangered', 'en'], VU: ['Vulnerable', 'vu'],
