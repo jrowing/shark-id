@@ -59,6 +59,17 @@
       <button id="btn-signout-2" class="btn">Sign out</button>
     </section>
 
+    <section id="set-password" class="card narrow" hidden>
+      <h1>Choose your password</h1>
+      <p>You signed in with a temporary password. Choose your own to carry on.</p>
+      <form id="set-password-form">
+        <label class="field">New password <input id="np1" type="password" required minlength="8" autocomplete="new-password"></label>
+        <label class="field">Type it again <input id="np2" type="password" required minlength="8" autocomplete="new-password"></label>
+        <button class="btn primary wide">Save password</button>
+        <p id="np-msg" class="errors" hidden></p>
+      </form>
+    </section>
+
     <section id="panel" hidden>
       <div class="toolbar">
         <div class="tabs">
@@ -83,7 +94,7 @@
           <p class="muted small"><strong>Reviewer</strong>: approves most species. <strong>Expert</strong>: also approves expert-only species (critically endangered and provisional IDs) and works the "Needs expert" queue. <strong>Admin</strong>: everything else, including blocking phones. Only you (the owner) can add, remove or change reviewers.</p>
           <form id="add-reviewer-form" class="add-reviewer">
             <h3>Add a reviewer</h3>
-            <p class="muted small">They need an account first: ask them to use <em>Create an account</em> on this page. Then add their email here and they're in straight away, with no request.</p>
+            <p class="muted small">Enter their email and choose a role. If they don't have an account yet, one is made with a temporary password for you to pass on; they choose their own password the first time they sign in. If they already have an account, they get access straight away.</p>
             <div class="btn-row">
               <label class="field">Email <input id="ar-email" type="email" required autocomplete="off"></label>
               <label class="field">Name (optional) <input id="ar-name" type="text" maxlength="80"></label>
@@ -91,6 +102,7 @@
               <button class="btn primary">Add</button>
             </div>
           </form>
+          <div id="temp-pass" class="temp-pass" hidden></div>
           <div id="people-table"></div>
         </div>
         <div class="card">

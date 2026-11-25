@@ -484,6 +484,24 @@ export async function reviewerStats() {
   const client = await sb();
   return check(await client.rpc('reviewer_stats'));
 }
+// Owner: account management through the manage-users Edge Function (it holds
+// the secret key). action: 'create' | 'reset_password' | 'delete_account'.
+export async function manageUsers(action, body = {}) {
+  const client = await sb();
+  const { data, error } = await client.functions.invoke('manage-users', { body: { action, ...body } });
+  if (error) {
+    let msg = error.message;
+    try { msg = (await error.context.json()).error || msg; } catch { /* not JSON */ }
+    if (error.context?.status === 404) msg = 'The manage-users function isn\'t deployed yet (Supabase → Edge Functions).';
+    throw new Error(msg);
+  }
+  return data;
+}
+// First sign-in with a temporary password: choose a new one.
+export async function setOwnPassword(password) {
+  const client = await sb();
+  check(await client.auth.updateUser({ password, data: { must_change_password: false } }));
+}
 // Owner: add someone who already has an account, by email, straight in with a role.
 export async function addReviewer(email, role, name) {
   const client = await sb();

@@ -54,6 +54,7 @@ supabase/add-*.sql           shark count, delete/purge, reference-only, extra sp
 supabase/scale-2026-11.sql   sign-in, limits, pgvector, reviewer roles, private bucket
 supabase/population-2026-11.sql  rays, zero records, sighting fields, photo-ID, research grade (run last)
 supabase/owner-2026-11.sql   owner (super-user): only you manage reviewers (run after population)
+supabase/functions/manage-users  Edge Function: owner creates accounts, resets passwords, deletes accounts
 ```
 
 ## Security model
@@ -91,3 +92,20 @@ GitHub Pages caches files for about 10 minutes. Without new URLs, phones can get
 - **Calibrate photo-ID** on real photos of known repeat animals (adjust `STRONG`/`POSSIBLE`), and add `maturity_cm` values per species.
 - **Seychelles Creole names**: add a `local_name` column to `species` and show it on the log page.
 - **Verify the IUCN categories and maximum lengths** in the seed data (sharks and rays) against the current Red List before launch.
+
+## Managing reviewers (owner only)
+
+One account is the **owner** (`reviewers.owner`). Only the owner sees the Reviewers section of **Review → People** and can add, approve, change, deactivate or remove reviewers. Admins keep their other powers (blocking phones, deleting visits, expert decisions). The owner's own row can't be changed from the app.
+
+Setup, all in the Supabase Dashboard:
+
+1. **SQL Editor:** put your email on the `owner_email` line of `supabase/owner-2026-11.sql` and run it. Run it again if you ever re-run `scale-2026-11.sql`.
+2. **Edge Functions → Deploy a new function → Via Editor:** name it `manage-users`, paste `supabase/functions/manage-users/index.ts`, and deploy. In the function's settings, turn **off** JWT verification: the function checks the caller itself, and only the owner gets through.
+
+Then, on the People tab:
+
+- **Add a reviewer:** enter an email and a role. A new person gets an account with a temporary password, shown once with a *Copy sign-in details* button so you can send it privately. They must choose their own password the first time they sign in. Someone who already has an account just gets access.
+- **Reset password:** gives them a new temporary password.
+- **Remove access:** takes away reviewer access but keeps the account. **Delete account:** removes access and deletes the account (soft delete, so the records they reviewed keep their history).
+
+No emails are sent, so Supabase's built-in email limits don't apply.

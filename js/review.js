@@ -21,6 +21,7 @@ async function boot() {
   speciesById = Object.fromEntries(species.map(s => [s.id, s]));
   const session = await store.getSession();
   if (!session) { $('#login').hidden = false; return; }
+  if (session.user.user_metadata?.must_change_password) { $('#set-password').hidden = false; return; }
   try { me = await store.myReviewer(); } catch (e) { toast(e.message, 'err'); }
   if (!me?.active) {
     $('#not-reviewer').hidden = false;
@@ -64,6 +65,18 @@ $('#request-form').addEventListener('submit', async (e) => {
     await store.requestAccess($('#rq-name').value.trim(), $('#rq-note').value.trim());
     $('#request-form-box').hidden = true; $('#request-waiting').hidden = false;
   } catch (err) { toast(err.message, 'err'); }
+});
+$('#set-password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#np-msg');
+  msg.hidden = true;
+  if ($('#np1').value !== $('#np2').value) { msg.hidden = false; msg.textContent = "The two passwords don't match."; return; }
+  try {
+    await store.setOwnPassword($('#np1').value);
+    $('#set-password').hidden = true;
+    toast('Password saved');
+    boot();
+  } catch (err) { msg.hidden = false; msg.textContent = err.message; }
 });
 for (const id of ['#btn-signout', '#btn-signout-2']) $(id).addEventListener('click', async () => { await store.signOut(); location.reload(); });
 
@@ -487,15 +500,34 @@ async function renderBlocked() {
 $('#add-reviewer-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('button', e.target); btn.disabled = true;
+  const email = $('#ar-email').value.trim();
   try {
-    const r = await store.addReviewer($('#ar-email').value.trim(), $('#ar-role').value, $('#ar-name').value.trim());
-    toast(r?.updated ? 'Reviewer updated and active' : 'Reviewer added');
+    const r = await store.manageUsers('create', { email, role: $('#ar-role').value, name: $('#ar-name').value.trim() });
+    if (r.temp_password) showTempPassword(email, r.temp_password, 'Account created');
+    else toast('They already had an account, so they now have access');
     e.target.reset();
     names = await store.reviewerNames().catch(() => names);
   } catch (err) { toast(err.message, 'err'); }
   btn.disabled = false;
   renderPeople();
 });
+
+// Shown once, right after creating an account or resetting a password.
+function showTempPassword(email, pw, title) {
+  const box = $('#temp-pass');
+  box.hidden = false;
+  box.innerHTML = `<strong>${esc(title)}: ${esc(email)}</strong>
+    <p class="small">Temporary password (shown only now): <code class="mono">${esc(pw)}</code>
+      <button type="button" class="btn ghost btn-copy">Copy sign-in details</button>
+      <button type="button" class="btn ghost btn-hide">Done</button></p>
+    <p class="small muted">Send it to them privately. They sign in at this page and must choose their own password straight away.</p>`;
+  const text = `The Sharkive reviewer sign-in\n${location.origin}${location.pathname}\nEmail: ${email}\nTemporary password: ${pw}\nYou'll choose your own password when you first sign in.`;
+  $('.btn-copy', box).addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(text); toast('Copied'); } catch { toast('Copy failed: select the password by hand', 'err'); }
+  });
+  $('.btn-hide', box).addEventListener('click', () => { box.hidden = true; box.innerHTML = ''; });
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
 
 async function renderPeople() {
   renderBlocked();
@@ -508,12 +540,15 @@ async function renderPeople() {
   box.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Person</th><th>Status</th><th>Role</th><th>Decisions (30 days / all)</th><th>Last decision</th><th></th></tr></thead><tbody>${
     rows.map(p => `<tr data-id="${esc(p.user_id)}">
       <td><strong>${esc(p.name || '—')}</strong><br><span class="small muted">${esc(p.email || '')}</span>${p.request_note ? `<br><span class="small">“${esc(p.request_note)}”</span>` : ''}</td>
-      <td>${p.owner ? 'Owner' : p.active ? 'Active' : p.requested_at ? `<span class="warn-text">Requested ${esc(when(p.requested_at))}</span>` : 'Inactive'}</td>
+      <td>${p.owner ? 'Owner' : p.active ? 'Active' : p.requested_at ? `<span class="warn-text">Requested ${esc(when(p.requested_at))}</span>` : 'Inactive'}${
+        p.owner ? '' : !p.last_sign_in ? '<br><span class="small muted">Not signed in yet</span>' : p.must_change_password ? '<br><span class="small muted">Using temporary password</span>' : ''}</td>
       <td>${p.owner ? 'admin' : `<select class="sel-role">${['reviewer', 'expert', 'admin'].map(r => `<option ${r === p.role ? 'selected' : ''}>${r}</option>`).join('')}</select>`}</td>
       <td>${p.decisions_30d} / ${p.decisions_total}</td>
       <td>${esc(when(p.last_decision))}</td>
       <td class="btn-row">${p.owner ? '<span class="small muted">You</span>' : `${p.active ? '<button class="btn ghost btn-deactivate">Deactivate</button>' : '<button class="btn primary btn-activate">Approve</button>'}
-        <button class="btn ghost btn-remove">Remove</button>`}</td>
+        <button class="btn ghost btn-remove" title="Take away reviewer access; the account stays">Remove access</button>
+        <button class="btn ghost btn-reset">Reset password</button>
+        <button class="btn ghost btn-delete" title="Delete the account completely; they can't sign in any more">Delete account</button>`}</td>
     </tr>`).join('')}</tbody></table>` : '<p class="muted">No reviewers yet.</p>';
   $$('tr[data-id]', box).forEach(tr => {
     const id = tr.dataset.id;
@@ -525,9 +560,30 @@ async function renderPeople() {
     $('.sel-role', tr)?.addEventListener('change', e => save({ role: e.target.value }, 'Role changed'));
     $('.btn-activate', tr)?.addEventListener('click', () => save({ active: true }, 'Reviewer approved'));
     $('.btn-deactivate', tr)?.addEventListener('click', () => save({ active: false }, 'Reviewer deactivated'));
+    // Two-tap confirm for destructive buttons.
+    const armed = (btn, label) => {
+      if (btn.dataset.armed) return true;
+      btn.dataset.armed = '1'; btn.textContent = label; btn.classList.replace('ghost', 'danger');
+      return false;
+    };
+    const email = rows.find(r => r.user_id === id)?.email || '';
+    $('.btn-reset', tr)?.addEventListener('click', async (e) => {
+      if (!armed(e.target, 'Tap again to reset')) return;
+      e.target.disabled = true;
+      try { const r = await store.manageUsers('reset_password', { user_id: id }); showTempPassword(email, r.temp_password, 'Password reset'); }
+      catch (err) { toast(err.message, 'err'); }
+      renderPeople();
+    });
+    $('.btn-delete', tr)?.addEventListener('click', async (e) => {
+      if (!armed(e.target, 'Tap again: delete for good')) return;
+      e.target.disabled = true;
+      try { await store.manageUsers('delete_account', { user_id: id }); toast('Account deleted'); }
+      catch (err) { toast(err.message, 'err'); }
+      renderPeople();
+    });
     const rm = $('.btn-remove', tr);
     rm?.addEventListener('click', async () => {
-      if (!rm.dataset.armed) { rm.dataset.armed = '1'; rm.textContent = 'Tap again to remove'; rm.classList.replace('ghost', 'danger'); return; }
+      if (!rm.dataset.armed) { rm.dataset.armed = '1'; rm.textContent = 'Tap again to remove access'; rm.classList.replace('ghost', 'danger'); return; }
       try { await store.removeReviewer(id); toast('Removed'); } catch (e) { toast(e.message, 'err'); }
       renderPeople();
     });

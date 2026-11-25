@@ -14,6 +14,9 @@
 --     here, in the SQL Editor, only.
 --   * add_reviewer(email, role, name): the owner adds someone who has already
 --     created an account on the review page, with no request needed.
+--   * user_id_by_email(email): used only by the manage-users Edge Function
+--     (supabase/functions/manage-users), which lets the owner create accounts,
+--     reset passwords and delete accounts from the review page.
 -- ===========================================================================
 
 -- >>> EDIT THIS LINE: the email you sign in to the review page with <<<
@@ -110,17 +113,20 @@ create policy "owner removes reviewers" on public.reviewers for delete to authen
 drop function if exists public.reviewer_stats();
 create or replace function public.reviewer_stats()
 returns table (user_id uuid, name text, email text, role text, active boolean, owner boolean, requested_at timestamptz,
-               request_note text, decisions_30d bigint, decisions_total bigint, last_decision timestamptz)
+               request_note text, decisions_30d bigint, decisions_total bigint, last_decision timestamptz,
+               last_sign_in timestamptz, must_change_password boolean)
 language plpgsql stable security definer set search_path = public as $$
 begin
   if not public.is_owner() then raise exception 'only the owner can manage people'; end if;
   return query
     select r.user_id, r.name, r.email, r.role, r.active, r.owner, r.requested_at, r.request_note,
            count(e.id) filter (where e.at > now() - interval '30 days'),
-           count(e.id), max(e.at)
+           count(e.id), max(e.at),
+           u.last_sign_in_at, coalesce((u.raw_user_meta_data ->> 'must_change_password')::boolean, false)
       from public.reviewers r
+      left join auth.users u on u.id = r.user_id
       left join public.review_events e on e.actor = r.user_id and e.action <> 'deleted'
-     group by r.user_id
+     group by r.user_id, u.id
      order by r.owner desc, r.active, r.requested_at desc nulls last, r.name;
 end $$;
 grant execute on function public.reviewer_stats() to authenticated;
@@ -135,7 +141,7 @@ begin
   if not public.is_owner() then raise exception 'only the owner can add reviewers'; end if;
   if p_role not in ('reviewer', 'expert', 'admin') then raise exception 'unknown role %', p_role; end if;
   select id into uid from auth.users
-   where lower(email) = lower(trim(p_email)) and not coalesce(is_anonymous, false);
+   where lower(email) = lower(trim(p_email)) and not coalesce(is_anonymous, false) and deleted_at is null;
   if uid is null then
     raise exception 'No account uses %. Ask them to create one on the review page first, then add them again.', trim(p_email);
   end if;
@@ -151,3 +157,14 @@ begin
 end $$;
 revoke execute on function public.add_reviewer(text, text, text) from public, anon;
 grant execute on function public.add_reviewer(text, text, text) to authenticated;
+
+-- ---------- helper for the manage-users Edge Function (secret key only) ----------
+create or replace function public.user_id_by_email(p_email text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from auth.users
+   where lower(email) = lower(trim(p_email)) and not coalesce(is_anonymous, false) and deleted_at is null
+   limit 1;
+$$;
+revoke execute on function public.user_id_by_email(text) from public, anon, authenticated;
+grant execute on function public.user_id_by_email(text) to service_role;
+grant select, insert, update, delete on public.reviewers to service_role;  -- Supabase grants this already; kept explicit
